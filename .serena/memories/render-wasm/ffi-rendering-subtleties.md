@@ -23,7 +23,13 @@
   for stroke-free text (SrcOver, no blur/shadows). Multi-style text is fine: span styles
   live in Paragraph `TextStyle`s. Text skips the `nested_fills` guard (fills are on spans).
   `draw_text` only `save_layer`s when stroke-group opacity is set; plain fill paint is direct.
-- Text with strokes / shadows / blur stays on the layered Fills/Strokes path.
+- Plain text fill paint reuses `TextContent.layout` paragraphs when
+  `has_usable_paint_layout` (paragraphs present + version match; ignores AABB width), via
+  `text::try_paint_from_layout_cache`. Stroke/shadow builders must not use that cache.
+- `TextContentLayout` paragraphs are `Rc`-shared on `Clone` so modifier clones
+  (rotate/pan) keep the paint cache; `needs_update` is paragraphs-empty only.
+  Rotation expands selrect AABB without invalidating glyph layout. Decorations are
+  skipped when no span requests underline/strike.
 - Zoom settle: visible tiles present via `FrameType::ViewportReady` before interest-ring
   work; crop-cache rebuild is deferred to the later `Full` so the soft→sharp snap is
   compose+present only.
