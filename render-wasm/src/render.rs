@@ -2332,6 +2332,7 @@ impl RenderState {
         timestamp: i32,
         sync_render: bool,
     ) -> Result<FrameType> {
+        performance::page_trace("start_render_loop:begin");
         self.clear(tree);
 
         let _start = performance::begin_timed_log!("start_render_loop");
@@ -2536,6 +2537,7 @@ impl RenderState {
                 // HiDPI viewports and is not needed until the next drag.
                 self.present_frame(tree);
                 self.viewport_presented = true;
+                performance::page_trace_done("render:ViewportReady (tiles-complete)");
                 wapi::notify_tiles_render_complete!();
                 Self::drain_partial_gpu_soft();
             }
@@ -2547,11 +2549,13 @@ impl RenderState {
                         self.rebuild_backbuffer_crop_cache(tree);
                     }
                     self.present_frame(tree);
+                    performance::page_trace_done("render:Full (tiles-complete)");
                     wapi::notify_tiles_render_complete!();
                 } else if !self.options.is_fast_mode() && !self.options.is_interactive_transform() {
                     // Interest fill finished after ViewportReady. Backbuffer
                     // still holds the viewport compose; rebuild crop cache
                     // off the sharp-snap frame.
+                    performance::page_trace("render:Full (interest fill done)");
                     self.rebuild_backbuffer_crop_cache(tree);
                 }
                 performance::end_measure!("render");
@@ -4277,6 +4281,7 @@ impl RenderState {
     /// until the post-gesture full render replaces them.
     pub fn rebuild_tile_index(&mut self, tree: ShapesPoolRef) {
         let zoom_changed = self.zoom_changed();
+        performance::page_trace("rebuild_tile_index:begin");
         performance::begin_measure!("rebuild_tile_index");
         let mut nodes = Vec::<Uuid>::with_capacity(64);
         nodes.push(Uuid::nil());
@@ -4297,6 +4302,7 @@ impl RenderState {
             }
         }
         performance::end_measure!("rebuild_tile_index");
+        performance::page_trace("rebuild_tile_index:end");
     }
 
     pub fn rebuild_tiles_shallow(&mut self, tree: ShapesPoolRef) {

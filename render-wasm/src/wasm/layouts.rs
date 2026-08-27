@@ -4,8 +4,13 @@ use macros::ToJs;
 
 mod align;
 pub mod constraints;
-mod flex;
+pub mod flex;
 mod grid;
+
+pub use align::{
+    RawAlignContent, RawAlignItems, RawAlignSelf, RawJustifyContent, RawJustifyItems,
+};
+pub use flex::{RawFlexDirection, RawWrapType};
 
 #[derive(Debug, Clone, PartialEq, Copy, ToJs)]
 #[repr(u8)]

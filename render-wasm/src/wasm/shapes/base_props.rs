@@ -12,10 +12,10 @@ use macros::wasm_error;
 
 use super::RawShapeType;
 
-const FLAG_CLIP_CONTENT: u8 = 0b0000_0001;
-const FLAG_HIDDEN: u8 = 0b0000_0010;
+pub const FLAG_CLIP_CONTENT: u8 = 0b0000_0001;
+pub const FLAG_HIDDEN: u8 = 0b0000_0010;
 
-const RAW_BASE_PROPS_SIZE: usize = std::mem::size_of::<RawBasePropsData>();
+pub const RAW_BASE_PROPS_SIZE: usize = std::mem::size_of::<RawBasePropsData>();
 
 /// Binary layout for batched shape base properties.
 ///
@@ -26,70 +26,70 @@ const RAW_BASE_PROPS_SIZE: usize = std::mem::size_of::<RawBasePropsData>();
 #[derive(Debug, Clone, Copy)]
 pub struct RawBasePropsData {
     // UUID id (16 bytes)
-    id_a: u32,
-    id_b: u32,
-    id_c: u32,
-    id_d: u32,
+    pub id_a: u32,
+    pub id_b: u32,
+    pub id_c: u32,
+    pub id_d: u32,
     // UUID parent_id (16 bytes)
-    parent_a: u32,
-    parent_b: u32,
-    parent_c: u32,
-    parent_d: u32,
+    pub parent_a: u32,
+    pub parent_b: u32,
+    pub parent_c: u32,
+    pub parent_d: u32,
     // Single-byte fields
-    shape_type: u8,
-    flags: u8,
-    blend_mode: u8,
-    constraint_h: u8,
-    constraint_v: u8,
-    padding: [u8; 3],
+    pub shape_type: u8,
+    pub flags: u8,
+    pub blend_mode: u8,
+    pub constraint_h: u8,
+    pub constraint_v: u8,
+    pub padding: [u8; 3],
     // f32 fields
-    opacity: f32,
-    rotation: f32,
+    pub opacity: f32,
+    pub rotation: f32,
     // Transform matrix (a, b, c, d, e, f)
-    transform_a: f32,
-    transform_b: f32,
-    transform_c: f32,
-    transform_d: f32,
-    transform_e: f32,
-    transform_f: f32,
+    pub transform_a: f32,
+    pub transform_b: f32,
+    pub transform_c: f32,
+    pub transform_d: f32,
+    pub transform_e: f32,
+    pub transform_f: f32,
     // Selrect (x1, y1, x2, y2)
-    selrect_x1: f32,
-    selrect_y1: f32,
-    selrect_x2: f32,
-    selrect_y2: f32,
+    pub selrect_x1: f32,
+    pub selrect_y1: f32,
+    pub selrect_x2: f32,
+    pub selrect_y2: f32,
     // Corners (r1, r2, r3, r4)
-    corner_r1: f32,
-    corner_r2: f32,
-    corner_r3: f32,
-    corner_r4: f32,
+    pub corner_r1: f32,
+    pub corner_r2: f32,
+    pub corner_r3: f32,
+    pub corner_r4: f32,
 }
 
 impl RawBasePropsData {
-    fn id(&self) -> Uuid {
+    pub fn id(&self) -> Uuid {
         uuid_from_u32_quartet(self.id_a, self.id_b, self.id_c, self.id_d)
     }
 
-    fn parent_id(&self) -> Uuid {
+    pub fn parent_id(&self) -> Uuid {
         uuid_from_u32_quartet(self.parent_a, self.parent_b, self.parent_c, self.parent_d)
     }
 
-    fn clip_content(&self) -> bool {
+    pub fn clip_content(&self) -> bool {
         (self.flags & FLAG_CLIP_CONTENT) != 0
     }
 
-    fn hidden(&self) -> bool {
+    pub fn hidden(&self) -> bool {
         (self.flags & FLAG_HIDDEN) != 0
     }
 
-    fn blend_mode(&self) -> BlendMode {
+    pub fn blend_mode(&self) -> BlendMode {
         RawBlendMode::from(self.blend_mode).into()
     }
 
-    fn constraint_h(&self) -> Option<ConstraintH> {
+    pub fn constraint_h(&self) -> Option<ConstraintH> {
         RawConstraintH::from(self.constraint_h).into()
     }
 
-    fn constraint_v(&self) -> Option<ConstraintV> {
+    pub fn constraint_v(&self) -> Option<ConstraintV> {
         RawConstraintV::from(self.constraint_v).into()
     }
 }
@@ -100,21 +100,8 @@ impl From<[u8; RAW_BASE_PROPS_SIZE]> for RawBasePropsData {
     }
 }
 
-#[no_mangle]
-#[wasm_error]
-pub extern "C" fn set_shape_base_props() -> Result<()> {
-    let bytes = mem::bytes();
-
-    if bytes.len() < RAW_BASE_PROPS_SIZE {
-        return Ok(());
-    }
-
-    // FIXME: this should just be a try_from
-    let data: [u8; RAW_BASE_PROPS_SIZE] = bytes[..RAW_BASE_PROPS_SIZE]
-        .try_into()
-        .map_err(|_| Error::CriticalError("Invalid bytes for base props".to_string()))?;
-    let raw = RawBasePropsData::from(data);
-
+/// Apply base props from a parsed record (selects the shape and sets core attrs).
+pub fn apply_base_props(raw: &RawBasePropsData) -> Result<()> {
     let id = raw.id();
     let parent_id = raw.parent_id();
     let shape_type = RawShapeType::from(raw.shape_type);
@@ -150,6 +137,24 @@ pub extern "C" fn set_shape_base_props() -> Result<()> {
             shape.set_corners((raw.corner_r1, raw.corner_r2, raw.corner_r3, raw.corner_r4));
         }
     });
+    Ok(())
+}
+
+#[no_mangle]
+#[wasm_error]
+pub extern "C" fn set_shape_base_props() -> Result<()> {
+    let bytes = mem::bytes();
+
+    if bytes.len() < RAW_BASE_PROPS_SIZE {
+        return Ok(());
+    }
+
+    // FIXME: this should just be a try_from
+    let data: [u8; RAW_BASE_PROPS_SIZE] = bytes[..RAW_BASE_PROPS_SIZE]
+        .try_into()
+        .map_err(|_| Error::CriticalError("Invalid bytes for base props".to_string()))?;
+    let raw = RawBasePropsData::from(data);
+    apply_base_props(&raw)?;
     Ok(())
 }
 

@@ -82,12 +82,15 @@ impl ShapesPoolImpl {
     }
 
     pub fn initialize(&mut self, capacity: usize) {
+        performance::page_trace("shapes_pool_initialize:begin");
         performance::begin_measure!("shapes_pool_initialize");
         self.counter = 0;
         self.uuid_to_idx = HashMap::with_capacity(capacity);
 
         let additional = capacity as i32 - self.shapes.len() as i32;
         if additional <= 0 {
+            performance::end_measure!("shapes_pool_initialize");
+            performance::page_trace("shapes_pool_initialize:done (reuse)");
             return;
         }
 
@@ -99,6 +102,7 @@ impl ShapesPoolImpl {
         self.shapes
             .extend(iter::repeat_with(|| Shape::new(Uuid::nil())).take(additional as usize));
         performance::end_measure!("shapes_pool_initialize");
+        performance::page_trace("shapes_pool_initialize:done");
     }
 
     pub fn add_shape(&mut self, id: Uuid) -> &mut Shape {

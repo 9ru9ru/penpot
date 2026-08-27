@@ -274,6 +274,7 @@ pub extern "C" fn render_preview() -> Result<()> {
 #[no_mangle]
 #[wasm_error]
 pub extern "C" fn begin_loading() -> Result<()> {
+    performance::page_trace("begin_loading");
     with_state!(state, {
         state.loading = true;
     });
@@ -288,6 +289,7 @@ pub extern "C" fn end_loading() -> Result<()> {
     with_state!(state, {
         state.loading = false;
     });
+    performance::page_trace_end_loading();
     Ok(())
 }
 
@@ -307,6 +309,7 @@ pub extern "C" fn render_loading_overlay() -> Result<()> {
 #[no_mangle]
 #[wasm_error]
 pub extern "C" fn reset_canvas() -> Result<()> {
+    performance::page_trace("reset_canvas");
     get_render_state().reset_canvas();
     Ok(())
 }
@@ -321,10 +324,12 @@ pub extern "C" fn resize_viewbox(width: i32, height: i32) -> Result<()> {
 #[no_mangle]
 #[wasm_error]
 pub extern "C" fn set_view(zoom: f32, x: f32, y: f32) -> Result<()> {
+    performance::page_trace("set_view:begin");
     performance::begin_measure!("set_view");
     let render_state = get_render_state();
     render_state.set_view(zoom, x, y);
     performance::end_measure!("set_view");
+    performance::page_trace("set_view:end");
     Ok(())
 }
 
@@ -352,6 +357,7 @@ pub extern "C" fn set_view_start() -> Result<()> {
 #[no_mangle]
 #[wasm_error]
 pub extern "C" fn set_view_end() -> Result<()> {
+    performance::page_trace("set_view_end:begin");
     with_state!(state, {
         performance::begin_measure!("set_view_end");
         let render_state = get_render_state();
@@ -382,6 +388,7 @@ pub extern "C" fn set_view_end() -> Result<()> {
         }
         performance::end_measure!("set_view_end");
     });
+    performance::page_trace("set_view_end:end");
     Ok(())
 }
 
@@ -444,15 +451,23 @@ pub extern "C" fn set_focus_mode() -> Result<()> {
 #[no_mangle]
 #[wasm_error]
 pub extern "C" fn init_shapes_pool(capacity: usize) -> Result<()> {
+    // First open has no preceding clean_up; page switch already reset there.
+    if !performance::page_trace_active() {
+        performance::page_trace_reset(&format!("init_shapes_pool capacity={capacity}"));
+    } else {
+        performance::page_trace(&format!("init_shapes_pool capacity={capacity}"));
+    }
     with_state!(state, {
         state.init_shapes_pool(capacity);
     });
+    performance::page_trace("init_shapes_pool:done");
     Ok(())
 }
 
 #[no_mangle]
 #[wasm_error]
 pub extern "C" fn use_shape(a: u32, b: u32, c: u32, d: u32) -> Result<()> {
+    performance::page_trace_use_shape();
     with_state!(state, {
         let id = uuid_from_u32_quartet(a, b, c, d);
         state.use_shape(id);
@@ -552,33 +567,8 @@ pub extern "C" fn add_shape_child(a: u32, b: u32, c: u32, d: u32) -> Result<()> 
 }
 
 fn set_children_set(entries: Vec<Uuid>) -> Result<()> {
-    let mut deleted = Vec::new();
-    let mut parent_id = None;
-
-    with_current_shape_mut!(state, |shape: &mut Shape| {
-        parent_id = Some(shape.id);
-        (_, deleted) = shape.compute_children_differences(&entries);
-        shape.children = entries.clone();
-
-        for id in entries {
-            state.touch_shape(id);
-            if let Some(children_shape) = state.shapes.get_mut(&id) {
-                children_shape.set_deleted(false);
-            }
-        }
-    });
-
     with_state!(state, {
-        let Some(parent_id) = parent_id else {
-            return Err(Error::RecoverableError(
-                "set_children_set: Parent ID not found".to_string(),
-            ));
-        };
-
-        for id in deleted {
-            state.delete_shape_children(parent_id, id);
-            state.touch_shape(id);
-        }
+        state.set_current_shape_children(entries)?;
     });
     Ok(())
 }

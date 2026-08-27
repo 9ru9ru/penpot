@@ -1,3 +1,5 @@
+use std::sync::atomic::{AtomicBool, AtomicI32, AtomicUsize, Ordering};
+
 #[cfg(target_arch = "wasm32")]
 pub fn get_time() -> i32 {
     crate::get_now!() as i32
@@ -7,6 +9,62 @@ pub fn get_time() -> i32 {
 pub fn get_time() -> i32 {
     let now = std::time::Instant::now();
     now.elapsed().as_millis() as i32
+}
+
+/// Always-on page-load / page-switch tracing (temporary profiling).
+/// Prints to stdout (browser console under Emscripten). No feature gates.
+/// Active only between `page_trace_reset` and first tiles-complete to avoid
+/// flooding the console on pan/zoom.
+static PAGE_TRACE_ACTIVE: AtomicBool = AtomicBool::new(false);
+static PAGE_TRACE_EPOCH: AtomicI32 = AtomicI32::new(0);
+static PAGE_TRACE_LAST: AtomicI32 = AtomicI32::new(0);
+static PAGE_TRACE_USE_SHAPE: AtomicUsize = AtomicUsize::new(0);
+
+pub fn page_trace_active() -> bool {
+    PAGE_TRACE_ACTIVE.load(Ordering::Relaxed)
+}
+
+/// Start a new page-load/switch session. Resets epoch and counters.
+pub fn page_trace_reset(label: &str) {
+    let now = get_time();
+    PAGE_TRACE_ACTIVE.store(true, Ordering::Relaxed);
+    PAGE_TRACE_EPOCH.store(now, Ordering::Relaxed);
+    PAGE_TRACE_LAST.store(now, Ordering::Relaxed);
+    PAGE_TRACE_USE_SHAPE.store(0, Ordering::Relaxed);
+    println!("[wasm-page] === {label} === t={now}ms");
+}
+
+/// Log a milestone with delta since previous mark and since session start.
+pub fn page_trace(label: &str) {
+    if !PAGE_TRACE_ACTIVE.load(Ordering::Relaxed) {
+        return;
+    }
+    let now = get_time();
+    let epoch = PAGE_TRACE_EPOCH.load(Ordering::Relaxed);
+    let last = PAGE_TRACE_LAST.load(Ordering::Relaxed);
+    let since_epoch = if epoch == 0 { 0 } else { now - epoch };
+    let since_last = if last == 0 { 0 } else { now - last };
+    PAGE_TRACE_LAST.store(now, Ordering::Relaxed);
+    println!("[wasm-page] {label} +{since_last}ms (session +{since_epoch}ms) t={now}ms");
+}
+
+/// Count a `use_shape` during the active page-load session.
+pub fn page_trace_use_shape() {
+    if PAGE_TRACE_ACTIVE.load(Ordering::Relaxed) {
+        PAGE_TRACE_USE_SHAPE.fetch_add(1, Ordering::Relaxed);
+    }
+}
+
+/// Log end of bulk loading with shape count.
+pub fn page_trace_end_loading() {
+    let n = PAGE_TRACE_USE_SHAPE.load(Ordering::Relaxed);
+    page_trace(&format!("end_loading shapes={n}"));
+}
+
+/// Final milestone of the page session (first tiles-complete), then silence.
+pub fn page_trace_done(label: &str) {
+    page_trace(label);
+    PAGE_TRACE_ACTIVE.store(false, Ordering::Relaxed);
 }
 
 /// Log a message to the browser console (only when profile-macros feature is enabled)

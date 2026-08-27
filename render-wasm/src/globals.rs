@@ -203,6 +203,7 @@ pub extern "C" fn init_headless(_width: i32, _height: i32) -> Result<()> {
 #[no_mangle]
 #[wasm_error]
 pub extern "C" fn clean_up() -> Result<()> {
+    crate::performance::page_trace_reset("clean_up");
     // Cancel the current animation frame if it exists so
     // it won't try to render without context
     let render_state = get_render_state();

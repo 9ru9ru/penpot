@@ -1,8 +1,9 @@
 mod base_props;
+mod upload_batch;
 
 use macros::ToJs;
 
-use crate::shapes::{Bool, Frame, Group, Path, Rect, SVGRaw, TextContent, Type};
+use crate::shapes::{Bool, Frame, Group, Path, Rect, Shape, SVGRaw, TextContent, Type};
 use crate::with_current_shape_mut;
 
 #[derive(Debug, Clone, PartialEq, ToJs)]
