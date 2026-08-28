@@ -507,11 +507,20 @@
 
                ;; Resize auto-grow text shapes whose selrect does not match
                ;; the WASM text layout once their fonts finish loading.
+               ;; Process in chunks so a large page does not freeze the main
+               ;; thread with one propagate-modifiers pass.
                (->> stream
                     (rx/filter (ptk/type? :app.render-wasm.api/stale-text-selrects))
                     (rx/map deref)
-                    (rx/map (fn [{:keys [ids]}]
-                              (dwwt/resize-wasm-text-all ids))))
+                    (rx/mapcat
+                     (fn [{:keys [ids]}]
+                       (->> (partition-all 64 ids)
+                            (map-indexed
+                             (fn [idx chunk]
+                               (if (zero? idx)
+                                 (rx/of (dwwt/resize-wasm-text-all chunk))
+                                 (->> (rx/of (dwwt/resize-wasm-text-all chunk))
+                                      (rx/delay (* idx 50))))))))))
 
                (let [local-commits-s
                      (->> stream
