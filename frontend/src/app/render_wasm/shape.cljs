@@ -341,7 +341,8 @@
       (when (d/not-empty? shape-changes)
         (->> (rx/from shape-changes)
              (rx/mapcat (fn [[shape-id props]] (process-shape! (get objects shape-id) props)))
-             (rx/subs! #(api/request-render "set-wasm-attrs")))))))
+             (rx/reduce conj [])
+             (rx/subs! (fn [_] (api/request-render "set-wasm-attrs"))))))))
 
 ;; `conj` empty set initialization
 (def conj* (fnil conj (d/ordered-set)))
