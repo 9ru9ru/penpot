@@ -1653,6 +1653,33 @@
       :auto-height (not (mth/close? height (:height selrect) 0.1))
       false)))
 
+(defonce ^:private pending-stale-selrect-ids (atom #{}))
+(defonce ^:private stale-selrect-sync-token (atom 0))
+
+(defn- flush-stale-selrect-sync!
+  []
+  (let [ids (swap! pending-stale-selrect-ids
+                   (fn [pending]
+                     (reset! pending-stale-selrect-ids #{})
+                     pending))]
+    (when (seq ids)
+      (st/emit! (ptk/data-event ::stale-text-selrects {:ids (vec ids)})))))
+
+(defn- schedule-stale-selrect-sync!
+  "Coalesce stale-selrect emissions and defer until the first viewport tile
+   pass completes, then run on idle so page load can paint first."
+  [stale-ids]
+  (swap! pending-stale-selrect-ids into stale-ids)
+  (let [token (swap! stale-selrect-sync-token inc)
+        flush-on-idle!
+        (fn []
+          (when (= token @stale-selrect-sync-token)
+            (timers/schedule-on-idle
+             (fn []
+               (when (= token @stale-selrect-sync-token)
+                 (flush-stale-selrect-sync!))))))]
+    (listen-tiles-render-complete-once! flush-on-idle!)))
+
 (defn- sync-stale-text-selrects!
   "Emit the ids of auto-grow text shapes whose selrect no longer matches the
    measured layout, so the workspace resizes them (data-event instead of a
@@ -1666,7 +1693,7 @@
                               (map :id))
                         shapes)]
     (when (seq stale-ids)
-      (st/emit! (ptk/data-event ::stale-text-selrects {:ids stale-ids})))))
+      (schedule-stale-selrect-sync! stale-ids))))
 
 (defn- relayout-after-fonts!
   "Relayout text shapes once their pending fonts have resolved. Font fetches
