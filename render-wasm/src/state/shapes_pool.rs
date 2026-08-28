@@ -59,6 +59,8 @@ pub struct ShapesPoolImpl {
     structure: HashMap<usize, Vec<StructureEntry>>,
     /// Scale content values, keyed by index
     scale_content: HashMap<usize, f32>,
+    /// Scratch for ancestor walks: `invalidate_ancestors_extrect` runs on every mutation.
+    ancestor_scratch: Vec<Uuid>,
 }
 
 // Type aliases - no longer need lifetimes!
@@ -78,6 +80,7 @@ impl ShapesPoolImpl {
             modifier_uuids: Vec::new(),
             structure: HashMap::default(),
             scale_content: HashMap::default(),
+            ancestor_scratch: Vec::new(),
         }
     }
 
@@ -239,6 +242,54 @@ impl ShapesPoolImpl {
         self.modified_shape_cache.clear()
     }
 
+    pub fn collect_dependent_ancestors(&self, id: &Uuid, out: &mut Vec<Uuid>) {
+        let Some(idx) = self.uuid_to_idx.get(id).copied() else {
+            return;
+        };
+
+        let mut current = self.shapes[idx].parent_id;
+        let mut depth = 0;
+
+        while let Some(parent_id) = current {
+            if parent_id.is_nil() {
+                break;
+            }
+            let Some(parent_idx) = self.uuid_to_idx.get(&parent_id).copied() else {
+                break;
+            };
+            if !self.shapes[parent_idx].extrect_depends_on_children() {
+                break;
+            }
+
+            out.push(parent_id);
+            current = self.shapes[parent_idx].parent_id;
+
+            // A chain longer than the pool means the parent links form a cycle.
+            depth += 1;
+            if depth >= self.shapes.len() {
+                break;
+            }
+        }
+    }
+
+    pub fn invalidate_ancestors_extrect(&mut self, id: &Uuid) {
+        let mut scratch = std::mem::take(&mut self.ancestor_scratch);
+        scratch.clear();
+        self.collect_dependent_ancestors(id, &mut scratch);
+
+        for parent_id in scratch.iter() {
+            let Some(parent_idx) = self.uuid_to_idx.get(parent_id).copied() else {
+                continue;
+            };
+            self.shapes[parent_idx].invalidate_extrect();
+            if let Some(cell) = self.modified_shape_cache.get_mut(&parent_idx) {
+                *cell = OnceCell::new();
+            }
+        }
+
+        self.ancestor_scratch = scratch;
+    }
+
     pub fn set_modifiers(&mut self, modifiers: HashMap<Uuid, skia::Matrix>) {
         let mut ids = Vec::<Uuid>::new();
         let mut modifiers_with_idx = HashMap::with_capacity(modifiers.len());
@@ -254,10 +305,8 @@ impl ShapesPoolImpl {
         // When CLJS sends only root shapes (translation on drag), descendants
         // need the same matrix.
         // For resize/rotate, propagate-modifiers already includes all descendants.
-        // Descendants are NOT pushed into `ids` / `modifier_uuids`: tile invalidation
-        // via rebuild_modifier_tiles only runs for roots, which is sufficient because
-        // descendants always lie inside the parent's bounding box and are therefore
-        // covered by the parent's old/new tile ranges.
+        // Descendants are NOT pushed into `ids` / `modifier_uuids`: rebuild_modifier_tiles
+        // runs for roots, and drops the non-clipping ancestors' extrects separately.
         let root_pairs: Vec<(usize, skia::Matrix)> = ids
             .iter()
             .filter_map(|uuid| {
@@ -289,13 +338,15 @@ impl ShapesPoolImpl {
         // Compute ancestors before consuming `ids` so we can move it into
         // `modifier_uuids` without a clone.
         let all_ids = shapes::all_with_ancestors(&ids, self, true);
-        // rebuild_modifier_tiles doesn't process every descendant individually.
-        self.modifier_uuids = ids;
+
         for uuid in all_ids {
             if let Some(idx) = self.uuid_to_idx.get(&uuid).copied() {
                 self.modified_shape_cache.insert(idx, OnceCell::new());
             }
         }
+
+        // rebuild_modifier_tiles doesn't process every descendant individually.
+        self.modifier_uuids = ids;
     }
 
     pub fn set_structure(&mut self, structure: HashMap<Uuid, Vec<StructureEntry>>) {
@@ -402,6 +453,7 @@ impl ShapesPoolImpl {
             modifier_uuids: Vec::new(),
             structure: HashMap::default(),
             scale_content: HashMap::default(),
+            ancestor_scratch: Vec::new(),
         }
     }
 
@@ -484,6 +536,7 @@ impl Clone for ShapesPoolImpl {
             modifier_uuids: self.modifier_uuids.clone(),
             structure: self.structure.clone(),
             scale_content: self.scale_content.clone(),
+            ancestor_scratch: Vec::new(),
         }
     }
 }
