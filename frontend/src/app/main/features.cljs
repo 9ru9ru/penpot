@@ -57,23 +57,11 @@
                         :else
                         features)]
 
-    ;; The WASM renderer requires the v2 text editor (hard dependency), so
-    ;; enable it whenever render-wasm/v1 is active.
-    ;;
-    ;; The converse does NOT hold: viewport.cljs already renders editor-v2 on
-    ;; the SVG renderer (see the "text-editor/v2" branch there). Stripping
-    ;; "text-editor/v2" whenever WASM was off therefore forced every
-    ;; SVG-renderer user onto editor-v1, the draft-js editor, which has no IME
-    ;; composition handling at all -- while a Korean/Japanese/Chinese syllable
-    ;; is being composed nothing is drawn on the canvas, and the text only
-    ;; appears once the syllable is committed. Since :render-switch defaults
-    ;; the renderer to :svg, that was the default experience.
-    ;;
-    ;; Keep the v2 editor available on both renderers; only
-    ;; "text-editor-wasm/v1" is genuinely WASM-only.
-    (cond-> (conj features "text-editor/v2")
-      (not (contains? features "render-wasm/v1"))
-      (disj "text-editor-wasm/v1"))))
+    ;; The WASM renderer requires the v2 text editor (hard dependency).
+    ;; Ensure it's always enabled whenever render-wasm/v1 is active.
+    (if (contains? features "render-wasm/v1")
+      (conj features "text-editor/v2")
+      (disj features "text-editor/v2" "text-editor-wasm/v1"))))
 
 (defn get-enabled-features
   "An explicit lookup of enabled features for the current team"
