@@ -229,7 +229,34 @@ function _characterFromEvent(e) {
   // with keydown and keyup events the character seems to always
   // come in as an uppercase character whether you are pressing shift
   // or not.  we should make sure it is always lowercase for comparisons
-  return String.fromCharCode(e.which).toLowerCase();
+  var character = String.fromCharCode(e.which).toLowerCase();
+
+  // Physical-key fallback for non-Latin input methods.
+  //
+  // With a Korean/Japanese/Chinese IME active, macOS reports keydown with
+  // e.which === 229 ("processing key") instead of the key that was actually
+  // pressed, so e.which no longer identifies anything and every single-letter
+  // shortcut (v, r, e, ...) becomes unmatchable. e.code names the physical key
+  // and is independent of both the keyboard layout and the input method.
+  //
+  // We only consult it when e.which produced something that is not a plain
+  // ASCII alphanumeric, so the normal Latin path is untouched -- including
+  // non-QWERTY layouts such as AZERTY or Dvorak, which intentionally follow
+  // e.which and would change behaviour if we always preferred e.code.
+  //
+  // e.isComposing is true only between compositionstart and compositionend,
+  // which fire on editable targets. Skipping the fallback there means we never
+  // steal a keystroke from a text field mid-composition.
+  if (e.code && !e.isComposing && !/^[a-z0-9]$/.test(character)) {
+    if (/^Key[A-Z]$/.test(e.code)) {
+      return e.code.charAt(3).toLowerCase();
+    }
+    if (/^Digit[0-9]$/.test(e.code)) {
+      return e.code.charAt(5);
+    }
+  }
+
+  return character;
 }
 
 /**
