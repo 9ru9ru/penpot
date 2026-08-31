@@ -37,7 +37,12 @@
    [cuerdas.core :as str]
    [rumext.v2 :as mf]))
 
-(def scale-per-pixel -0.0057)
+;; Zoom sensitivity for ctrl/cmd + wheel, and for a trackpad pinch, which the
+;; browser reports the same way. `scale` below is 1 + |scale-per-pixel * delta|,
+;; and one wheel notch normalizes to a delta of about 100, so this is roughly
+;; the zoom factor per notch: 0.0010 gives ~1.10x, close to Figma. The stock
+;; value of 0.0057 gave ~1.57x, which overshot on every notch.
+(def scale-per-pixel -0.0010)
 
 (defn on-pointer-down
   [{:keys [id blocked hidden type]} selected edition drawing-tool text-editing?
