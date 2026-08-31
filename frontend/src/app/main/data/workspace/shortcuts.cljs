@@ -320,8 +320,10 @@
                                   {::ev/origin "workspace:shortcuts"}))}
    ;; TOOLS
 
-   :draw-frame           {:tooltip "B"
-                          :command ["b" "a"]
+   ;; Tool keys follow Figma: the board is F (Figma's frame), the ellipse is O,
+   ;; and the pencil sits on Shift+P next to the pen on P.
+   :draw-frame           {:tooltip "F"
+                          :command "f"
                           :section [:workspace :basics]
                           :subsections [:tools :basics]
                           :fn #(emit-when-no-readonly (dwd/select-for-drawing :frame))}
@@ -338,8 +340,8 @@
                           :subsections [:tools]
                           :fn #(emit-when-no-readonly (dwd/select-for-drawing :rect))}
 
-   :draw-ellipse         {:tooltip "E"
-                          :command "e"
+   :draw-ellipse         {:tooltip "O"
+                          :command "o"
                           :section [:workspace]
                           :subsections [:tools]
                           :fn #(emit-when-no-readonly (dwd/select-for-drawing :circle))}
@@ -369,8 +371,8 @@
                           :section [:workspace]
                           :fn #(emit-when-no-readonly (dwd/select-for-drawing :arrow))}
 
-   :draw-curve           {:tooltip (ds/shift "C")
-                          :command "shift+c"
+   :draw-curve           {:tooltip (ds/shift "P")
+                          :command "shift+p"
                           :section [:workspace]
                           :subsections [:tools]
                           :fn #(emit-when-no-readonly (dwd/select-for-drawing :curve))}
@@ -424,7 +426,12 @@
                           :subsections [:tools]
                           :fn #(emit-when-no-readonly (mdc/picker-for-selected-shape))}
 
+   ;; Unbound: F now selects the board, matching Figma. Focus mode stays
+   ;; reachable from the context menu and the layers panel. The entry is kept
+   ;; rather than deleted because get-tooltip asserts the key exists and the
+   ;; context menu looks it up; :disabled keeps bind! from binding the key.
    :toggle-focus-mode    {:command "f"
+                          :disabled true
                           :tooltip "F"
                           :section [:workspace :basics]
                           :subsections [:basics :tools]
