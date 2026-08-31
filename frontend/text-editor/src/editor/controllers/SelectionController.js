@@ -32,6 +32,7 @@ import {
   mergeParagraphs,
   fixParagraph,
   createParagraph,
+  normalizeParagraph,
 } from "../content/dom/Paragraph.js";
 import {
   removeBackward,
@@ -1245,6 +1246,35 @@ export class SelectionController extends EventTarget {
       return this.collapse(forwardTarget, 0);
     }
     return this.collapse(this.focusNode, this.focusOffset);
+  }
+
+  /**
+   * Restores the canonical `paragraph > span > #text` shape around the caret.
+   *
+   * An input method leaves the syllable it is composing as a bare text node
+   * directly under the paragraph until the syllable is committed, and the
+   * editing commands all assume the canonical shape. Run this before a command
+   * touches the DOM so composing text is wrapped in a span first.
+   *
+   * The caret is re-collapsed onto the same text node and offset afterwards:
+   * the node is moved into the new span rather than recreated, but moving it
+   * can still collapse the browser selection.
+   *
+   * @returns {boolean} true when the DOM was modified
+   */
+  normalizeFocus() {
+    const node = this.focusNode;
+    if (!node || node.nodeType !== Node.TEXT_NODE) return false;
+
+    const parent = node.parentElement;
+    if (!isParagraph(parent)) return false;
+
+    const offset = this.focusOffset;
+    const changed = normalizeParagraph(parent);
+    if (changed) {
+      this.collapse(node, offset);
+    }
+    return changed;
   }
 
   /**

@@ -13,6 +13,7 @@ import {
   splitParagraphAtNode,
   isEmptyParagraph,
   createParagraphWith,
+  normalizeParagraph,
 } from "./Paragraph.js";
 import { createTextSpan, isTextSpan } from "./TextSpan.js";
 import { isLineBreak } from './LineBreak.js';
@@ -262,5 +263,43 @@ describe("Paragraph", () => {
     nonEmptyParagraph.dataset.itype = "paragraph";
     nonEmptyParagraph.appendChild(nonEmptyTextSpan);
     expect(isEmptyParagraph(nonEmptyParagraph)).toBeFalsy();
+  });
+
+  // Regression: an input method parks the syllable it is composing as a bare
+  // text node directly under the paragraph. getParagraph/getTextSpan resolve a
+  // text node by fixed depth, so deleting while composing Korean threw
+  // "Cannot find paragraph" and the serializer produced :children [].
+  test("normalizeParagraph should wrap a bare text node in a text span", () => {
+    const paragraph = createParagraph([createTextSpan(document.createTextNode("ab"))]);
+    const stray = document.createTextNode("한");
+    paragraph.appendChild(stray);
+
+    expect(normalizeParagraph(paragraph)).toBe(true);
+    expect(paragraph.children.length).toBe(2);
+    expect(isTextSpan(paragraph.lastChild)).toBeTruthy();
+    // moved, not recreated, so a Range pointing at it stays valid
+    expect(paragraph.lastChild.firstChild).toBe(stray);
+    expect(getParagraph(stray)).toBe(paragraph);
+  });
+
+  test("normalizeParagraph should drop an empty stray text node", () => {
+    const paragraph = createParagraph([createTextSpan(document.createTextNode("ab"))]);
+    paragraph.appendChild(document.createTextNode(""));
+
+    expect(normalizeParagraph(paragraph)).toBe(true);
+    expect(paragraph.childNodes.length).toBe(1);
+  });
+
+  test("normalizeParagraph should leave a canonical paragraph untouched", () => {
+    const paragraph = createParagraph([createTextSpan(document.createTextNode("ab"))]);
+    expect(normalizeParagraph(paragraph)).toBe(false);
+    expect(paragraph.children.length).toBe(1);
+  });
+
+  test("getParagraph should resolve a text node parked directly under the paragraph", () => {
+    const paragraph = createParagraph([createTextSpan(document.createTextNode("ab"))]);
+    const stray = document.createTextNode("한");
+    paragraph.appendChild(stray);
+    expect(getParagraph(stray)).toBe(paragraph);
   });
 });

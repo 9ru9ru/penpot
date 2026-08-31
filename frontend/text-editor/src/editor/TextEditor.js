@@ -404,6 +404,12 @@ export class TextEditor extends EventTarget {
     }
 
     if (e.inputType in commands) {
+      // An input method leaves the syllable it is composing as a bare text
+      // node directly under the paragraph. Every command below assumes the
+      // canonical `paragraph > span > #text` shape, so wrap it first --
+      // otherwise deleting while composing throws "Cannot find paragraph".
+      this.#selectionController.normalizeFocus();
+
       const command = commands[e.inputType];
       command(e, this, this.#selectionController);
       this.#notifyLayout(LayoutType.FULL);
