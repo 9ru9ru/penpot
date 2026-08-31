@@ -352,11 +352,30 @@
     "bottom" "flex-end"
     nil))
 
-(defn- font-family-from-font-id [font-id]
-  (if (str/includes? font-id "gfont-noto-sans")
-    (let [lang (str/replace font-id #"gfont\-noto\-sans\-" "")]
-      (if (>= (count lang) 3) (str/capital lang) (str/upper lang)))
-    "Noto Color Emoji"))
+(defn- font-family-from-font-id
+  "CSS family name for a fallback font id.
+
+  This name goes into --fallback-families, which styles.cljs appends to every
+  span's font-family, so it has to be the name the browser actually registered.
+  Google fonts are injected as Google's own stylesheet -- process-gfont-css
+  only rewrites the URLs -- so that name is the catalog's :family:
+  \"Noto Sans KR\" for gfont-noto-sans-kr.
+
+  Deriving it from the id instead yielded \"KR\", which matches no font. The
+  DOM overlay then measured the text with whatever system font the browser
+  picked while Skia drew it with Noto Sans KR, and because the two disagree on
+  advance widths the caret and the selection highlight landed at the wrong
+  offsets -- visibly short of the end of a Korean line.
+
+  v3_editor carries the same derivation and the same bug; it is not reachable
+  here because text-editor-wasm/v1 is off."
+  [font-id]
+  (or (:family (fonts/get-font-data font-id))
+      ;; Unknown id: keep the previous guess rather than dropping the family.
+      (if (str/includes? font-id "gfont-noto-sans")
+        (let [lang (str/replace font-id #"gfont\-noto\-sans\-" "")]
+          (if (>= (count lang) 3) (str/capital lang) (str/upper lang)))
+        "Noto Color Emoji")))
 
 ;; Text Editor Wrapper
 ;; This is an SVG element that wraps the HTML editor.
