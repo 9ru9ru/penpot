@@ -22,6 +22,7 @@ import {
   createEmptyTextSpan,
   isTextSpanEnd,
   splitTextSpan,
+  QUERY as TEXT_SPAN_QUERY,
 } from "./TextSpan.js";
 import { createLineBreak, isLineBreak } from "./LineBreak.js";
 import { setStyles } from "./Style.js";
@@ -62,6 +63,55 @@ export function fixParagraph(node) {
   const br = createLineBreak();
   node.replaceChildren(createTextSpan(br));
   return br;
+}
+
+/**
+ * Wraps any bare text node sitting directly under the paragraph in a text
+ * span, restoring the canonical `paragraph > span > #text` shape.
+ *
+ * An input method parks the syllable it is still composing as a bare text node
+ * directly under the paragraph, and only wraps it in a span once the syllable
+ * is committed. Everything downstream assumes the canonical shape:
+ * `getParagraph` and `getTextSpan` resolve a text node by fixed depth, and
+ * `removeBackwardText` throws "Cannot find paragraph" / "Cannot find text
+ * span" when they come back null. Deleting while composing Korean therefore
+ * raised an error toast instead of deleting.
+ *
+ * The text nodes are MOVED into the new spans (`createTextSpan` appends them)
+ * rather than recreated, so a Range or Selection pointing at one keeps
+ * pointing at the same node and offset.
+ *
+ * @param {Node} paragraph
+ * @returns {boolean} true when the paragraph was modified
+ */
+export function normalizeParagraph(paragraph) {
+  if (!isParagraph(paragraph)) return false;
+
+  // Reuse the styles of an existing span so the rescued text keeps rendering
+  // the way it did while it was being composed.
+  const reference = paragraph.querySelector(TEXT_SPAN_QUERY);
+  let changed = false;
+
+  for (const node of Array.from(paragraph.childNodes)) {
+    if (node.nodeType !== Node.TEXT_NODE) continue;
+
+    // createTextSpan rejects empty text, and an empty stray node carries
+    // nothing worth keeping.
+    if (node.nodeValue.length === 0) {
+      node.remove();
+      changed = true;
+      continue;
+    }
+
+    const next = node.nextSibling;
+    // createTextSpan appends the node, which removes it from the paragraph,
+    // so capture its position first and re-insert the span there.
+    const textSpan = createTextSpan(node, (reference ?? paragraph).style);
+    paragraph.insertBefore(textSpan, next);
+    changed = true;
+  }
+
+  return changed;
 }
 
 /**
@@ -182,14 +232,11 @@ export function getParagraph(node) {
   if (!node) return null;
   if (isParagraph(node)) return node;
   if (node.nodeType === Node.TEXT_NODE || isLineBreak(node)) {
-    const paragraph = node?.parentElement?.parentElement;
-    if (!paragraph) {
-      return null;
-    }
-    if (!isParagraph(paragraph)) {
-      return null;
-    }
-    return paragraph;
+    // Walk up rather than assuming the node sits exactly two levels below the
+    // paragraph (`paragraph > span > #text`). While an input method composes,
+    // its text node hangs directly off the paragraph, so the fixed lookup
+    // landed on the root and returned null.
+    return node.parentElement?.closest(QUERY) ?? null;
   }
   return node.closest(QUERY);
 }
