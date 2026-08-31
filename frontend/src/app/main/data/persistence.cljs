@@ -27,6 +27,16 @@
 
 (def force-persist? #(= % ::force-persist))
 
+;; How long editing has to stay quiet before pending changes are flushed to the
+;; backend. Collaborators only see an edit once it has been persisted and
+;; broadcast, so this is the floor on how stale another cursor's view can be.
+(def ^:private ^:const persist-idle-time 1000)
+
+;; A debounce alone never fires while someone keeps typing, so a long
+;; uninterrupted edit stayed invisible to collaborators for as long as it took.
+;; Flush on this cadence too, so sustained editing still propagates.
+(def ^:private ^:const persist-max-interval 2000)
+
 (defn wait-persisted
   "Returns an observable that emits the first terminal persistence status
    (nil | :saved) and completes. With a timeout-ms, if persistence doesn't
@@ -222,9 +232,18 @@
 
             notifier-s
             (rx/merge
+             ;; flush shortly after the user stops
              (->> local-commits-s
-                  (rx/debounce 3000)
+                  (rx/debounce persist-idle-time)
                   (rx/tap #(log/trc :hint "persistence beat")))
+
+             ;; ...and on a steady cadence while they keep going. rx/sample
+             ;; only emits when the source produced something since the last
+             ;; tick, so this is silent while idle.
+             (->> local-commits-s
+                  (rx/sample persist-max-interval)
+                  (rx/tap #(log/trc :hint "persistence beat (sustained)")))
+
              (->> stream
                   (rx/filter #(= % ::force-persist))))]
 
