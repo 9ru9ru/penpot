@@ -385,8 +385,16 @@ export class SelectionController extends EventTarget {
 
     if (this.#fixInsertCompositionText) {
       this.#fixInsertCompositionText = false;
+      // fixParagraph only returns a line break when the focus node really is a
+      // paragraph left holding a bare <br> -- the Chrome case it exists for.
+      // Any other focus node (a text node, most of the time) gives undefined,
+      // and collapse(undefined, 0) throws
+      //   TypeError: Cannot read properties of undefined (reading 'nodeType')
+      // which surfaced as the generic error toast while composing Korean.
       const lineBreak = fixParagraph(this.focusNode);
-      this.collapse(lineBreak, 0);
+      if (lineBreak) {
+        this.collapse(lineBreak, 0);
+      }
     }
 
     if (this.#debug) {
