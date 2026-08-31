@@ -160,13 +160,22 @@
         (coalesce-per-tick
          (fn []
            (when-let [content (content/dom->cljs (dwt/get-editor-root instance))]
-             ;; For WASM renderer, use the dedicated layout sync to avoid touching shape content
-             ;; during `needslayout` bursts. For non-wasm, keep existing behavior.
-             (if (features/active-feature? @st/state "render-wasm/v1")
-               (st/emit! (dwt/v2-sync-wasm-text-layout shape-id content))
-               (st/emit! (dwt/v2-update-text-shape-content shape-id content
-                                                           :update-name? true
-                                                           :save-undo? false))))))
+             ;; The WASM path syncs the layout so the local canvas repaints, but it
+             ;; deliberately does not write shape :content. That left the shape's
+             ;; stored content untouched for the whole edit, so nothing was
+             ;; committed, nothing was persisted, and a collaborator saw the text
+             ;; only once the editor blurred.
+             ;;
+             ;; Also write the content on this path, exactly as the SVG path
+             ;; already does, so an edit in progress reaches other people. It is
+             ;; still coalesced to once per tick, and :save-undo? false keeps it
+             ;; out of the undo stack -- the finalizing write on blur is the one
+             ;; that records an undo entry.
+             (when (features/active-feature? @st/state "render-wasm/v1")
+               (st/emit! (dwt/v2-sync-wasm-text-layout shape-id content)))
+             (st/emit! (dwt/v2-update-text-shape-content shape-id content
+                                                         :update-name? true
+                                                         :save-undo? false)))))
 
         on-change
         (fn []
