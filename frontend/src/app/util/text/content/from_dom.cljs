@@ -119,9 +119,27 @@
 
 (defn create-root
   [element]
-  (let [root-styles (get-root-styles element)]
+  (let [root-styles (get-root-styles element)
+        paragraphs  (mapv create-paragraph (.-children element))
+
+        ;; Same guard as create-paragraph, one level up. A paragraph-set is
+        ;; also declared [:vector {:min 1} ...], and while an input method is
+        ;; composing the editor root can transiently hold no element children
+        ;; at all -- the text being composed sits directly under it as a text
+        ;; node. That produced :children [] here and the backend rejected the
+        ;; update with :data-validation / "invalid shape found".
+        ;;
+        ;; root -> paragraph-set -> paragraph -> inline nodes is the whole
+        ;; nesting, and a root always gets exactly one paragraph-set, so this
+        ;; and create-paragraph cover every level that can come out empty.
+        paragraphs  (if (seq paragraphs)
+                      paragraphs
+                      [(d/merge {:type "paragraph"
+                                 :children [(d/merge {:text (or (.-textContent element) "")}
+                                                     (get-text-span-styles element))]}
+                                (get-paragraph-styles element))])]
     (d/merge {:type "root"
               :key (.-id element)
               :children [{:type "paragraph-set"
-                          :children (mapv create-paragraph (.-children element))}]}
+                          :children paragraphs}]}
              root-styles)))
