@@ -185,6 +185,45 @@ function _addEvent(object, type, callback) {
  * @param {Event} e
  * @return {string}
  */
+/**
+ * Resolves a key from its physical position when the reported character is not
+ * one Mousetrap can match.
+ *
+ * With a Korean, Japanese or Chinese input method active the browser reports
+ * the composed character instead of the key that was pressed. On macOS,
+ * pressing V with the Korean IME on gives keydown `which` 86 but keypress
+ * `which` 12621 (U+314D 'ㅍ'), and Mousetrap binds an unmodified single letter
+ * to keypress (see _pickBestAction), so every tool shortcut -- v, r, e ... --
+ * silently stopped matching while the IME was on. Shortcuts with a modifier
+ * kept working because those bind to keydown.
+ *
+ * `e.code` names the physical key and is independent of both keyboard layout
+ * and input method. It is only consulted when the reported character is not a
+ * plain ASCII alphanumeric, so the Latin path is untouched -- including
+ * non-QWERTY layouts such as AZERTY and Dvorak, which intentionally follow
+ * `which` and would change behaviour if we always preferred `code`.
+ *
+ * `e.isComposing` is true only between compositionstart and compositionend,
+ * which fire on editable targets, so skipping it there means a keystroke is
+ * never stolen from a text field mid-composition.
+ *
+ * @param {Event} e
+ * @param {string} character  the character derived from e.which
+ * @return {string}
+ */
+function _physicalKeyFallback(e, character) {
+  if (!e.code || e.isComposing || /^[a-z0-9]$/i.test(character)) {
+    return character;
+  }
+  if (/^Key[A-Z]$/.test(e.code)) {
+    return e.code.charAt(3).toLowerCase();
+  }
+  if (/^Digit[0-9]$/.test(e.code)) {
+    return e.code.charAt(5);
+  }
+  return character;
+}
+
 function _characterFromEvent(e) {
 
   // Numpad digits as "num0".."num9" — keeps them separate from main-row bindings across NumLock states and event types.
@@ -212,7 +251,7 @@ function _characterFromEvent(e) {
       character = character.toLowerCase();
     }
 
-    return character;
+    return _physicalKeyFallback(e, character);
   }
 
   // for non keypress events the special maps are needed
@@ -231,32 +270,7 @@ function _characterFromEvent(e) {
   // or not.  we should make sure it is always lowercase for comparisons
   var character = String.fromCharCode(e.which).toLowerCase();
 
-  // Physical-key fallback for non-Latin input methods.
-  //
-  // With a Korean/Japanese/Chinese IME active, macOS reports keydown with
-  // e.which === 229 ("processing key") instead of the key that was actually
-  // pressed, so e.which no longer identifies anything and every single-letter
-  // shortcut (v, r, e, ...) becomes unmatchable. e.code names the physical key
-  // and is independent of both the keyboard layout and the input method.
-  //
-  // We only consult it when e.which produced something that is not a plain
-  // ASCII alphanumeric, so the normal Latin path is untouched -- including
-  // non-QWERTY layouts such as AZERTY or Dvorak, which intentionally follow
-  // e.which and would change behaviour if we always preferred e.code.
-  //
-  // e.isComposing is true only between compositionstart and compositionend,
-  // which fire on editable targets. Skipping the fallback there means we never
-  // steal a keystroke from a text field mid-composition.
-  if (e.code && !e.isComposing && !/^[a-z0-9]$/.test(character)) {
-    if (/^Key[A-Z]$/.test(e.code)) {
-      return e.code.charAt(3).toLowerCase();
-    }
-    if (/^Digit[0-9]$/.test(e.code)) {
-      return e.code.charAt(5);
-    }
-  }
-
-  return character;
+  return _physicalKeyFallback(e, character);
 }
 
 /**
