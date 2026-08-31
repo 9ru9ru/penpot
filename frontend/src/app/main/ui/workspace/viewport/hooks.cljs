@@ -486,7 +486,11 @@
     (fn []
       (.removeEventListener js/window "keydown" wsc/on-display-guides-keydown)))
 
-  (mf/with-effect [path-editing? drawing-path? grid-editing?]
+  ;; text-editing? belongs in the deps: entering text edit mode changes only
+  ;; that flag, so without it the effect never re-runs and the ::text shortcut
+  ;; set is never pushed. Every text shortcut -- ctrl+b, ctrl+i, ctrl+u, the
+  ;; font-size steps -- was dead as a result.
+  (mf/with-effect [path-editing? drawing-path? grid-editing? text-editing?]
     (cond
       grid-editing?
       (do
