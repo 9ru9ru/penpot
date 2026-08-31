@@ -13,11 +13,13 @@
 
 (defn is-text-node
   [node]
-  (= (.-nodeType node) js/Node.TEXT_NODE))
+  (and (some? node)
+       (= (.-nodeType node) js/Node.TEXT_NODE)))
 
 (defn is-element
   [node tag]
-  (and (= (.-nodeType node) js/Node.ELEMENT_NODE)
+  (and (some? node)
+       (= (.-nodeType node) js/Node.ELEMENT_NODE)
        (= (.-nodeName node) (.toUpperCase tag))))
 
 (defn is-line-break
@@ -31,11 +33,26 @@
 
 (defn get-text-span-text
   [element]
-  (when-not (is-text-span-child (.-firstChild element))
-    (throw (js/TypeError. "Invalid text span child")))
-  (if (is-line-break (.-firstChild element))
-    ""
-    (.-textContent element)))
+  (let [first-child (.-firstChild element)]
+    (cond
+      ;; A span the browser has emptied. Chrome does this while an input method
+      ;; is composing -- it drops the text node and refills it on the next
+      ;; keystroke -- so serializing mid-composition used to hit
+      ;;   TypeError: Cannot read properties of null (reading 'nodeType')
+      ;; from the nil firstChild, and the exception escaped to the error
+      ;; boundary and took the whole text editor down. An empty span is empty
+      ;; text, which is exactly what a <br>-only span already reports.
+      (nil? first-child)
+      ""
+
+      (is-line-break first-child)
+      ""
+
+      (is-text-node first-child)
+      (.-textContent element)
+
+      :else
+      (throw (js/TypeError. "Invalid text span child")))))
 
 (defn get-attrs-from-styles
   [element attrs defaults]
