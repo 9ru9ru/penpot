@@ -91,10 +91,31 @@
 
 (defn create-paragraph
   [element]
-  (d/merge {:type "paragraph"
-            :key (.-id element)
-            :children (mapv create-text-span (.-children element))}
-           (get-paragraph-styles element)))
+  (let [children (mapv create-text-span (.-children element))
+
+        ;; A paragraph must carry at least one inline node: the content schema
+        ;; declares [:vector {:min 1} ...] for it, so an empty vector makes the
+        ;; backend reject the entire update-file request with
+        ;; :data-validation / "invalid shape found <id>".
+        ;;
+        ;; `.-children` yields ELEMENT children only, and an input method
+        ;; leaves the syllable it is still composing as a bare text node
+        ;; directly under the paragraph -- it is wrapped in an inline span only
+        ;; once the syllable is committed. Typing Korean, Japanese or Chinese
+        ;; therefore produced :children [] on the keystrokes in between, and
+        ;; every save attempted mid-composition failed, so nothing written
+        ;; during composition was ever persisted.
+        ;;
+        ;; Fall back to a single inline node holding the text the paragraph
+        ;; currently has, styled from the paragraph element itself.
+        children (if (seq children)
+                   children
+                   [(d/merge {:text (or (.-textContent element) "")}
+                             (get-text-span-styles element))])]
+    (d/merge {:type "paragraph"
+              :key (.-id element)
+              :children children}
+             (get-paragraph-styles element))))
 
 (defn create-root
   [element]
