@@ -44,7 +44,15 @@
      {:id "bold" :name "700" :weight "700" :style "normal" :ttf-url "sourcesanspro-bold.ttf"}
      {:id "bolditalic" :name "700 Italic" :weight "700" :style "italic" :ttf-url "sourcesanspro-bolditalic.ttf"}
      {:id "black" :name "900" :weight "900" :style "normal" :ttf-url "sourcesanspro-black.ttf"}
-     {:id "blackitalic" :name "900 Italic" :weight "900" :style "italic" :ttf-url "sourcesanspro-blackitalic.ttf"}]}])
+     {:id "blackitalic" :name "900 Italic" :weight "900" :style "italic" :ttf-url "sourcesanspro-blackitalic.ttf"}]}
+
+   {:id "nanumgothic"
+    :name "Nanum Gothic"
+    :family "nanumgothic"
+    :variants
+    [{:id "regular" :name "400" :weight "400" :style "normal" :ttf-url "nanumgothic-regular.ttf"}
+     {:id "bold" :name "700" :weight "700" :style "normal" :ttf-url "nanumgothic-bold.ttf"}
+     {:id "800" :name "800" :weight "800" :style "normal" :suffix "extrabold" :ttf-url "nanumgothic-extrabold.ttf"}]}])
 
 (defonce fontsdb (l/atom {}))
 (defonce fonts (l/atom []))
