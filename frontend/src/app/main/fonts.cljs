@@ -52,7 +52,16 @@
     :variants
     [{:id "regular" :name "400" :weight "400" :style "normal" :ttf-url "nanumgothic-regular.ttf"}
      {:id "bold" :name "700" :weight "700" :style "normal" :ttf-url "nanumgothic-bold.ttf"}
-     {:id "800" :name "800" :weight "800" :style "normal" :suffix "extrabold" :ttf-url "nanumgothic-extrabold.ttf"}]}])
+     {:id "800" :name "800" :weight "800" :style "normal" :suffix "extrabold" :ttf-url "nanumgothic-extrabold.ttf"}]}
+
+   {:id "pretendard"
+    :name "Pretendard"
+    :family "pretendard"
+    :variants
+    [{:id "regular" :name "400" :weight "400" :style "normal" :ttf-url "pretendard-regular.ttf"}
+     {:id "500" :name "500" :weight "500" :style "normal" :suffix "medium" :ttf-url "pretendard-medium.ttf"}
+     {:id "600" :name "600" :weight "600" :style "normal" :suffix "semibold" :ttf-url "pretendard-semibold.ttf"}
+     {:id "bold" :name "700" :weight "700" :style "normal" :ttf-url "pretendard-bold.ttf"}]}])
 
 (defonce fontsdb (l/atom {}))
 (defonce fonts (l/atom []))

@@ -107,8 +107,8 @@
 (def default-text-attrs
   {:typography-ref-file nil
    :typography-ref-id nil
-   :font-id "sourcesanspro"
-   :font-family "sourcesanspro"
+   :font-id "pretendard"
+   :font-family "pretendard"
    :font-variant-id "regular"
    :font-size "14"
    :font-weight "400"
@@ -149,7 +149,7 @@
 (def default-typography
   (-> default-text-attrs
       (select-keys typography-fields)
-      (assoc :name "Source Sans Pro Regular")))
+      (assoc :name "Pretendard Regular")))
 
 (defn node-seq
   ([root] (node-seq identity root))

@@ -66,3 +66,9 @@ $_latin-unicode-list: "U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+
 @include font-face("nanumgothic", "nanumgothic-regular", null, normal);
 @include font-face("nanumgothic", "nanumgothic-bold", null, bold);
 @include font-face("nanumgothic", "nanumgothic-extrabold", null, "800");
+
+// Pretendard (Hangul)
+@include font-face("pretendard", "pretendard-regular", null, normal);
+@include font-face("pretendard", "pretendard-medium", null, "500");
+@include font-face("pretendard", "pretendard-semibold", null, "600");
+@include font-face("pretendard", "pretendard-bold", null, bold);
