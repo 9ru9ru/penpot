@@ -61,3 +61,8 @@ $_latin-unicode-list: "U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+
 
 // Roboto mono
 @include font-face("robotomono", "RobotoMono-Regular", $_latin-unicode-list, normal);
+
+// Nanum Gothic (Hangul)
+@include font-face("nanumgothic", "nanumgothic-regular", null, normal);
+@include font-face("nanumgothic", "nanumgothic-bold", null, bold);
+@include font-face("nanumgothic", "nanumgothic-extrabold", null, "800");
