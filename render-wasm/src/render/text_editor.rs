@@ -157,8 +157,18 @@ fn calculate_cursor_rect(
                     RectWidthStyle::Tight,
                 );
                 if !rects.is_empty() {
+                    // A single "character" (grapheme/codepoint) can shape into
+                    // several glyphs -- e.g. Pretendard renders each Hangul
+                    // syllable as separate modular jamo glyphs. Only looking at
+                    // rects[0] returns just the first jamo's box, landing the
+                    // caret inside the syllable instead of at its true left
+                    // edge. Take the envelope across every returned rect.
+                    let left = rects
+                        .iter()
+                        .map(|tb| tb.rect.left())
+                        .fold(f32::INFINITY, f32::min);
                     let r = &rects[0].rect;
-                    (r.left(), r.top(), r.width(), r.height())
+                    (left, r.top(), r.width(), r.height())
                 } else {
                     (0.0, 0.0, 1.0, laid_out_para.height())
                 }
@@ -169,8 +179,12 @@ fn calculate_cursor_rect(
                     RectWidthStyle::Tight,
                 );
                 if !rects.is_empty() {
+                    let right = rects
+                        .iter()
+                        .map(|tb| tb.rect.right())
+                        .fold(f32::NEG_INFINITY, f32::max);
                     let r = &rects[0].rect;
-                    (r.right(), r.top(), r.width(), r.height())
+                    (right, r.top(), r.width(), r.height())
                 } else {
                     (
                         laid_out_para.longest_line(),
@@ -186,8 +200,12 @@ fn calculate_cursor_rect(
                     RectWidthStyle::Tight,
                 );
                 if !rects.is_empty() {
+                    let left = rects
+                        .iter()
+                        .map(|tb| tb.rect.left())
+                        .fold(f32::INFINITY, f32::min);
                     let r = &rects[0].rect;
-                    (r.left(), r.top(), r.width(), r.height())
+                    (left, r.top(), r.width(), r.height())
                 } else {
                     // Fallback: use glyph position
                     let pos = laid_out_para.get_glyph_position_at_coordinate((0.0, 0.0));
