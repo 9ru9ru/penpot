@@ -11,6 +11,7 @@
    [app.common.data.macros :as dm]
    [app.main.data.helpers :as dsh]
    [app.main.data.workspace.texts :as dwt]
+   [app.main.fonts :as fonts]
    [app.main.refs :as refs]
    [app.main.store :as st]
    [app.main.ui.css-cursors :as cur]
@@ -33,11 +34,28 @@
                :update-name? true
                :finalize? finalize?))))
 
-(defn- font-family-from-font-id [font-id]
-  (if (str/includes? font-id "gfont-noto-sans")
-    (let [lang (str/replace font-id #"gfont\-noto\-sans\-" "")]
-      (if (>= (count lang) 3) (str/capital lang) (str/upper lang)))
-    "Noto Color Emoji"))
+(defn- font-family-from-font-id
+  "CSS family name for a fallback font id.
+
+  This name goes into --fallback-families, which the editor's DOM
+  contenteditable overlay uses as its font-family so the caret/selection
+  advance widths it measures match what Skia actually draws.
+
+  Previously this always fell through to a hardcoded guess (\"Noto Color
+  Emoji\" for anything that wasn't a gfont-noto-sans-* id), which is wrong
+  for every builtin font (sourcesanspro, nanumgothic, pretendard, ...) and
+  any other registered font: the DOM overlay measured with whatever system
+  font the browser substituted for the made-up family name, while Skia drew
+  with the real one, so the two disagreed on advance widths and the caret
+  landed short of the true end of a line -- most visible on Hangul text.
+  Mirrors the fix already applied to v2_editor's copy of this function
+  (d25049a81)."
+  [font-id]
+  (or (:family (fonts/get-font-data font-id))
+      (if (str/includes? font-id "gfont-noto-sans")
+        (let [lang (str/replace font-id #"gfont\-noto\-sans\-" "")]
+          (if (>= (count lang) 3) (str/capital lang) (str/upper lang)))
+        "Noto Color Emoji")))
 
 (mf/defc text-editor*
   "Contenteditable element positioned over the text shape to capture input events."

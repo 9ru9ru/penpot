@@ -367,8 +367,9 @@
   advance widths the caret and the selection highlight landed at the wrong
   offsets -- visibly short of the end of a Korean line.
 
-  v3_editor carries the same derivation and the same bug; it is not reachable
-  here because text-editor-wasm/v1 is off."
+  v3_editor had a copy of this same broken derivation; ported this fix there
+  too (see its font-family-from-font-id) since render-wasm/v1 is active for
+  at least one team here, making that path reachable."
   [font-id]
   (or (:family (fonts/get-font-data font-id))
       ;; Unknown id: keep the previous guess rather than dropping the family.
