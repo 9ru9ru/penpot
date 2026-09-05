@@ -431,7 +431,7 @@ impl TextEditorState {
         };
         let mut offset = 0;
         for span in last_paragraph.children() {
-            offset += span.text.len();
+            offset += span.text.chars().count();
         }
         self.extend_selection_from_position(&TextPositionWithAffinity::new(
             PositionWithAffinity {
