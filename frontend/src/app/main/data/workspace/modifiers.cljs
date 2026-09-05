@@ -311,7 +311,18 @@
         (ensure-interactive-transform-end!)
         (wasm.api/clean-modifiers)
         (vreset! wasm-structure-modifiers-active? false)
-        (set-wasm-props! (dsh/lookup-page-objects state) (:wasm-props state) [])))
+        (set-wasm-props! (dsh/lookup-page-objects state) (:wasm-props state) [])
+        ;; The shape's real geometry is now committed to the store, so the
+        ;; temporary preview modifiers (pushed via `set-temporary-modifiers`
+        ;; while the change was in flight, e.g. by an auto-width text resize)
+        ;; must be dropped. Interactive drag/resize/rotate gestures already do
+        ;; this themselves on mouseup (`finish-transform`); non-gesture commits
+        ;; that go straight through `apply-wasm-modifiers` (like the text
+        ;; auto-resize commit that runs once its fonts finish loading) have no
+        ;; other place that clears it. Leaving it set means the next render
+        ;; that merges `workspace-wasm-modifiers` re-applies the old preview
+        ;; scale on top of the now-committed size, compounding it.
+        (rx/push! ms/wasm-modifiers nil)))
 
     ptk/UpdateEvent
     (update [_ state]
