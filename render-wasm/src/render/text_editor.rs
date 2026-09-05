@@ -259,13 +259,13 @@ fn calculate_selection_rects(
             .sum();
 
         let range_start = if para_idx == start.paragraph {
-            start.offset
+            start.offset.min(para_char_count)
         } else {
             0
         };
 
         let range_end = if para_idx == end.paragraph {
-            end.offset
+            end.offset.min(para_char_count)
         } else {
             para_char_count
         };
