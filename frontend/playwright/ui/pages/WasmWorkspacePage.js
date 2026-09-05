@@ -5,6 +5,7 @@ export const WASM_PROFILE = "logged-in-user/get-profile-wasm-renderer.json";
 
 export const WASM_FLAGS = [
   "enable-feature-render-wasm",
+  "enable-feature-text-editor-wasm",
   "enable-render-wasm-dpr",
   "enable-feature-text-editor-v2",
   // Default flags enable render-wasm-info; keep screenshots stable in e2e.
