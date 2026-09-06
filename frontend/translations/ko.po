@@ -7118,6 +7118,18 @@ msgstr "속성 복사"
 msgid "workspace.shape.menu.copy-svg"
 msgstr "SVG로 복사"
 
+#: src/app/main/ui/workspace/context_menu.cljs:233
+msgid "workspace.shape.menu.copy-as-image"
+msgstr "이미지로 복사"
+
+#: src/app/main/data/workspace/clipboard.cljs:1195
+msgid "workspace.clipboard.copying"
+msgstr "이미지를 복사하는 중…"
+
+#: src/app/main/data/workspace/clipboard.cljs:1201
+msgid "workspace.clipboard.image-copied"
+msgstr "이미지를 클립보드에 복사했습니다"
+
 #: src/app/main/ui/workspace/context_menu.cljs:235
 msgid "workspace.shape.menu.copy-text"
 msgstr "텍스트로 복사"

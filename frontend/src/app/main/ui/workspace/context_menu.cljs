@@ -225,10 +225,14 @@
       [:> menu-entry* {:title (tr "workspace.shape.menu.copy-svg")
                        :on-click handle-copy-svg}]
 
-      (when (some cfh/frame-shape? shapes)
-        [:> menu-entry* {:title (tr "workspace.shape.menu.copy-as-image")
-                         :disabled multiple?
-                         :on-click handle-copy-as-image}])
+      ;; copy-as-image exports whatever shape is selected -- it reads
+      ;; (first (lookup-selected)) and goes through the normal export pipeline --
+      ;; so there is nothing board-specific about it. Gating the entry on a board
+      ;; in the selection only hid it from images, groups and text.
+      ;; Still disabled for a multiple selection: only the first shape is exported.
+      [:> menu-entry* {:title (tr "workspace.shape.menu.copy-as-image")
+                       :disabled multiple?
+                       :on-click handle-copy-as-image}]
 
       [:> menu-separator* {}]
 
