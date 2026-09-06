@@ -49,6 +49,9 @@
    {:id "nanumgothic"
     :name "Nanum Gothic"
     :family "nanumgothic"
+    ;; Fixed uuid so the WASM renderer can tell this family apart from the
+    ;; embedded default (see app.render-wasm.api.fonts/builtin-font-id->uuid).
+    :uuid #uuid "00000000-0000-0000-0000-00000000fa01"
     :variants
     [{:id "regular" :name "400" :weight "400" :style "normal" :ttf-url "nanumgothic-regular.ttf"}
      {:id "bold" :name "700" :weight "700" :style "normal" :ttf-url "nanumgothic-bold.ttf"}
@@ -57,6 +60,8 @@
    {:id "pretendard"
     :name "Pretendard"
     :family "pretendard"
+    ;; Fixed uuid, same reason as nanumgothic above.
+    :uuid #uuid "00000000-0000-0000-0000-00000000fa02"
     :variants
     [{:id "regular" :name "400" :weight "400" :style "normal" :ttf-url "pretendard-regular.ttf"}
      {:id "500" :name "500" :weight "500" :style "normal" :suffix "medium" :ttf-url "pretendard-medium.ttf"}
