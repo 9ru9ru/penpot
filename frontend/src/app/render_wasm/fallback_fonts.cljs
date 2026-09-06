@@ -102,7 +102,11 @@
 (def noto-fonts
   {:japanese    {:font-id "gfont-noto-sans-jp"            :font-variant-id "regular" :style 0 :weight 400 :is-fallback true}
    :chinese     {:font-id "gfont-noto-sans-sc"            :font-variant-id "regular" :style 0 :weight 400 :is-fallback true}
-   :korean      {:font-id "gfont-noto-sans-kr"            :font-variant-id "regular" :style 0 :weight 400 :is-fallback true}
+   ;; Korean deliberately falls back to the bundled Pretendard rather than a
+   ;; Noto: it is already the default text font here, so it is loaded anyway,
+   ;; it keeps Hangul looking the same whatever the base family is, and it
+   ;; avoids pulling a 3 MB Noto Sans KR over the network for every file.
+   :korean      {:font-id "pretendard"                     :font-variant-id "regular" :style 0 :weight 400 :is-fallback true}
    :arabic      {:font-id "gfont-noto-sans-arabic"        :font-variant-id "regular" :style 0 :weight 400 :is-fallback true}
    :cyrillic    {:font-id "gfont-noto-sans"               :font-variant-id "regular" :style 0 :weight 400 :is-fallback true}
    :greek       {:font-id "gfont-noto-sans"               :font-variant-id "regular" :style 0 :weight 400 :is-fallback true}
