@@ -94,6 +94,21 @@
       variant
       closest-variant)))
 
+(defn- builtin-font-id->uuid
+  "WASM identifies a font family by uuid. Builtin families exist only in the
+  frontend (`fonts/local-fonts`), so they carry a fixed :uuid there; only
+  sourcesanspro falls through to uuid/zero, because that is the family WASM
+  registers as its embedded default.
+
+  Returning uuid/zero for *every* builtin family meant `font-stored?` saw the
+  default font sitting in that slot and reported the family as already
+  uploaded, so e.g. pretendard-regular.ttf was never sent to the renderer:
+  Skia laid out and drew the text with Source Sans Pro plus the script
+  fallback (Noto Sans KR for Hangul) while the DOM editor overlay measured
+  with the real Pretendard, and the two disagreed on advance widths."
+  [font-id]
+  (or (:uuid (fonts/get-font-data font-id)) uuid/zero))
+
 (defn- font-id->uuid [font-id]
   (case (font-backend font-id)
     :google
@@ -101,7 +116,7 @@
     :custom
     (custom-font-id->uuid font-id)
     :builtin
-    uuid/zero))
+    (builtin-font-id->uuid font-id)))
 
 (defn uuid->font-id
   [font-uuid]
@@ -331,14 +346,17 @@
     0))
 
 (defn normalize-font-id
+  "Font id -> WASM family uuid, for the text serializer.
+
+  Delegates to `font-id->uuid` on purpose: the uuid stored alongside the font
+  bytes and the uuid serialized with the span have to agree, since together
+  they form the family alias Skia looks up. This used to be a second,
+  divergent implementation that parsed everything after the first \"-\" as a
+  uuid, which threw for dash-less builtin ids (\"pretendard\") and silently
+  returned uuid/zero."
   [font-id]
   (try
-    (if ^boolean (str/starts-with? font-id "gfont-")
-      (google-font-id->uuid font-id)
-      (let [no-prefix (subs font-id (inc (str/index-of font-id "-")))]
-        (if (or (nil? no-prefix) (not (string? no-prefix)) (str/blank? no-prefix))
-          uuid/zero
-          (uuid/parse no-prefix))))
+    (font-id->uuid font-id)
     (catch :default _e
       uuid/zero)))
 
