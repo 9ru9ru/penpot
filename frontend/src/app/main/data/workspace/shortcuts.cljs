@@ -320,6 +320,16 @@
                           :subsections [:tools]
                           :fn #(emit-when-no-readonly (dwd/select-for-drawing :curve))}
 
+   :draw-line            {:tooltip "L"
+                          :command "l"
+                          :subsections [:tools]
+                          :fn #(emit-when-no-readonly (dwd/select-for-drawing :line))}
+
+   :draw-arrow           {:tooltip (ds/shift "L")
+                          :command "shift+l"
+                          :subsections [:tools]
+                          :fn #(emit-when-no-readonly (dwd/select-for-drawing :arrow))}
+
    :add-comment          {:tooltip "C"
                           :command "c"
                           :subsections [:tools]
@@ -346,8 +356,10 @@
                           :subsections [:tools]
                           :fn #(emit-when-no-readonly (dw/toggle-lock-selected))}
 
-   :toggle-lock-size     {:tooltip (ds/shift "L")
-                          :command "shift+l"
+   ;; NOTE: this used to be Shift+L, which now draws an arrow so the
+   ;; line/arrow pair matches Figma's L / Shift+L.
+   :toggle-lock-size     {:tooltip (ds/shift "R")
+                          :command "shift+r"
                           :subsections [:tools]
                           :fn #(emit-when-no-readonly (dw/toggle-proportion-lock))}
 

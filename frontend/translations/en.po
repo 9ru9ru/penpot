@@ -5265,6 +5265,10 @@ msgstr "Delete node"
 msgid "shortcuts.detach-component"
 msgstr "Detach component"
 
+#: src/app/main/data/workspace/shortcuts.cljs
+msgid "shortcuts.draw-arrow"
+msgstr "Arrow"
+
 #: src/app/main/ui/workspace/sidebar/shortcuts.cljs:104
 msgid "shortcuts.draw-curve"
 msgstr "Curve"
@@ -5276,6 +5280,10 @@ msgstr "Ellipse"
 #: src/app/main/ui/workspace/sidebar/shortcuts.cljs:106
 msgid "shortcuts.draw-frame"
 msgstr "Board"
+
+#: src/app/main/data/workspace/shortcuts.cljs
+msgid "shortcuts.draw-line"
+msgstr "Line"
 
 #: src/app/main/ui/workspace/sidebar/shortcuts.cljs:107
 msgid "shortcuts.draw-nodes"
@@ -9775,6 +9783,10 @@ msgstr "The value is not valid"
 msgid "workspace.tokens.warning-name-change"
 msgstr "Renaming this token will break any reference to its old name"
 
+#: src/app/main/ui/workspace/top_toolbar.cljs
+msgid "workspace.toolbar.arrow"
+msgstr "Arrow (%s)"
+
 #: src/app/main/ui/workspace/sidebar.cljs:159, src/app/main/ui/workspace/sidebar.cljs:166
 msgid "workspace.toolbar.assets"
 msgstr "Assets"
@@ -9811,6 +9823,10 @@ msgstr "Create board. Click and drag to define its size. (%s)"
 #: src/app/main/ui/workspace/top_toolbar.cljs:116, src/app/main/ui/workspace/top_toolbar.cljs:117
 msgid "workspace.toolbar.image"
 msgstr "Image (%s)"
+
+#: src/app/main/ui/workspace/top_toolbar.cljs
+msgid "workspace.toolbar.line"
+msgstr "Line (%s)"
 
 #: src/app/main/ui/workspace/top_toolbar.cljs:65, src/app/main/ui/workspace/top_toolbar.cljs:66, src/app/main/ui/workspace/top_toolbar.cljs:77
 msgid "workspace.toolbar.mcp"

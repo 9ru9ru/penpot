@@ -299,6 +299,24 @@
             :data-tool "path"
             :data-testid "path-btn"}
            deprecated-icon/path]]
+         [:li
+          [:button
+           {:title (tr "workspace.toolbar.line" (sc/get-tooltip :draw-line))
+            :aria-label (tr "workspace.toolbar.line" (sc/get-tooltip :draw-line))
+            :class (stl/css-case :main-toolbar-options-button true :selected (= drawtool :line))
+            :on-click select-drawtool
+            :data-tool "line"
+            :data-testid "line-btn"}
+           [:> icon* {:icon-id i/easing-linear}]]]
+         [:li
+          [:button
+           {:title (tr "workspace.toolbar.arrow" (sc/get-tooltip :draw-arrow))
+            :aria-label (tr "workspace.toolbar.arrow" (sc/get-tooltip :draw-arrow))
+            :class (stl/css-case :main-toolbar-options-button true :selected (= drawtool :arrow))
+            :on-click select-drawtool
+            :data-tool "arrow"
+            :data-testid "arrow-btn"}
+           [:> icon* {:icon-id i/stroke-arrow}]]]
 
          (when (features/active-feature? @st/state "plugins/runtime")
            [:li
