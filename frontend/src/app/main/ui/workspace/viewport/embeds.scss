@@ -5,7 +5,7 @@
 // Copyright (c) KALEIDOS INC Sucursal en España SL
 
 // The group is transparent to the pointer so it never swallows a click
-// meant for a shape; only the badge itself takes events.
+// meant for a shape; only the controls inside it take events.
 .embed-badges {
   pointer-events: none;
 }
@@ -32,4 +32,28 @@
   height: 100%;
   overflow: hidden;
   pointer-events: auto;
+}
+
+.embed-controls {
+  pointer-events: none;
+}
+
+.embed-bar {
+  pointer-events: auto;
+  cursor: move;
+  fill: var(--color-accent-primary, #7efff5);
+  fill-opacity: 0.9;
+}
+
+.embed-stop {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.embed-stop-bg {
+  fill: rgb(0 0 0 / 0.75);
+}
+
+.embed-stop:hover .embed-stop-bg {
+  fill: rgb(0 0 0 / 0.95);
 }
