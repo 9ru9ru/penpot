@@ -19,6 +19,7 @@
    [app.common.types.fills :as types.fills]
    [app.main.data.media :as dmm]
    [app.main.data.notifications :as ntf]
+   [app.main.data.workspace.common :as dwc]
    [app.main.data.workspace.media :as dwm]
    [app.main.data.workspace.shapes :as dwsh]
    [app.main.store :as st]
@@ -187,6 +188,74 @@
                    :position position})))
               (rx/catch dwm/handle-media-error)
               (rx/finalize #(st/emit! (ntf/hide :tag :media-loading)))))))))
+
+(defn- video-blob?
+  [blob]
+  (contains? cm/video-types (.-type blob)))
+
+(defn upload-media-workspace
+  "Drop-in replacement for `dwm/upload-media-workspace` that peels off
+  video blobs.
+
+  The regular media pipeline validates against the image types and would
+  reject a dropped or pasted video outright, so those become embeds and
+  everything else carries on unchanged."
+  [{:keys [blobs position] :as params}]
+  (ptk/reify ::upload-media-workspace
+    ptk/WatchEvent
+    (watch [_ _ _]
+      (if (empty? blobs)
+        ;; the uri branch of the pipeline; nothing to sort out here
+        (rx/of (dwm/upload-media-workspace params))
+        (let [videos (filter video-blob? blobs)
+              others (remove video-blob? blobs)]
+          (rx/from
+           (concat
+            (when (seq others)
+              [(dwm/upload-media-workspace (assoc params :blobs (seq others)))])
+            (map (fn [blob]
+                   (upload-video {:blob blob :position position}))
+                 videos))))))))
+
+;; --- WORKSPACE PLAYBACK
+
+;; Only one embed plays on the canvas at a time. Keeping it to one means
+;; the overlay never has to compete with the shapes around it for
+;; pointer events or z-order, which is what always-on playback would
+;; have cost.
+
+(defn stop-embed
+  []
+  (ptk/reify ::stop-embed
+    ptk/UpdateEvent
+    (update [_ state]
+      (dissoc state :workspace-active-embed))))
+
+(defn play-embed
+  "Play `id` in place on the canvas until anything interrupts."
+  [id]
+  (ptk/reify ::play-embed
+    ptk/UpdateEvent
+    (update [_ state]
+      (assoc state :workspace-active-embed id))
+
+    ptk/WatchEvent
+    (watch [_ _ stream]
+      ;; escape, a click elsewhere and tool changes all raise interrupt
+      (->> stream
+           (rx/filter dwc/interrupt?)
+           (rx/take 1)
+           (rx/map stop-embed)))))
+
+(defn toggle-embed
+  "Start playing `id`, or stop it when it is the one already playing."
+  [id]
+  (ptk/reify ::toggle-embed
+    ptk/WatchEvent
+    (watch [_ state _]
+      (if (= id (:workspace-active-embed state))
+        (rx/of (stop-embed))
+        (rx/of (play-embed id))))))
 
 ;; --- EDITING
 

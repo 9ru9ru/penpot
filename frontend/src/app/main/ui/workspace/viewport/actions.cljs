@@ -15,8 +15,8 @@
    [app.config :as cfg]
    [app.main.data.workspace :as dw]
    [app.main.data.workspace.drawing :as dd]
+   [app.main.data.workspace.embed :as dwe]
    [app.main.data.workspace.libraries :as dwl]
-   [app.main.data.workspace.media :as dwm]
    [app.main.data.workspace.path :as dwdp]
    [app.main.data.workspace.specialized-panel :as-alias dwsp]
    [app.main.refs :as refs]
@@ -238,6 +238,13 @@
           (fn []
             (when (and (not drawing-path?) shape)
               (cond
+                ;; An embed plays in place rather than opening for
+                ;; editing; its poster is what a double click would
+                ;; otherwise put into edit mode
+                (some? (:embed shape))
+                (st/emit! (dw/select-shape id)
+                          (dwe/toggle-embed id))
+
                 (and editable? (not= id edition) (not read-only?))
                 (do
                   (st/emit! (dw/select-shape id)
@@ -560,7 +567,7 @@
                params {:file-id (:id file)
                        :position viewport-coord
                        :blobs (seq files)}]
-           (st/emit! (dwm/upload-media-workspace params)))
+           (st/emit! (dwe/upload-media-workspace params)))
 
          ;; Will trigger when the user drags an image (usually rendered as datauri) from a
          ;; browser to the viewport (mainly on firefox, all depending on the origin of the
@@ -575,7 +582,7 @@
                params (if (seq uris)
                         (assoc params :uris uris)
                         (assoc params :blobs (map wapi/data-uri->blob data)))]
-           (st/emit! (dwm/upload-media-workspace params)))
+           (st/emit! (dwe/upload-media-workspace params)))
 
          ;; Will trigger when the user drags a file from their file explorer into the viewport
          ;; Or the user pastes an image
@@ -585,7 +592,7 @@
                params {:file-id (:id file)
                        :position viewport-coord
                        :blobs (seq files)}]
-           (st/emit! (dwm/upload-media-workspace params))))))))
+           (st/emit! (dwe/upload-media-workspace params))))))))
 
 (def ^:private invalid-paste-targets
   #{"INPUT" "TEXTAREA"})

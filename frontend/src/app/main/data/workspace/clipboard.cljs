@@ -19,6 +19,7 @@
    [app.common.geom.shapes.grid-layout :as gslg]
    [app.common.logic.libraries :as cll]
    [app.common.logic.shapes :as cls]
+   [app.common.media :as cm]
    [app.common.schema :as sm]
    [app.common.transit :as t]
    [app.common.types.component :as ctk]
@@ -261,6 +262,7 @@
 (declare ^:private paste-image)
 (declare ^:private paste-svg-text)
 (declare ^:private paste-shapes)
+(declare ^:private calculate-paste-position)
 
 (def ^:private default-options
   #js {:decodeTransit t/decode-str
@@ -277,6 +279,10 @@
 
         (some #(= type %) clipboard/image-types)
         (rx/of (paste-image blob))
+
+        (contains? cm/video-types type)
+        (rx/of (dwemb/upload-video {:blob blob
+                                    :position (calculate-paste-position @st/state)}))
 
         (= type "text/html")
         (->> (rx/from (.text blob))
