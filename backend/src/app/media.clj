@@ -63,6 +63,42 @@
 
    upload))
 
+(def ^:private webm-magic
+  "EBML header shared by webm and matroska."
+  (byte-array [(unchecked-byte 0x1A) (unchecked-byte 0x45)
+               (unchecked-byte 0xDF) (unchecked-byte 0xA3)]))
+
+(defn- read-head
+  "Read the first `n` bytes of `path`, or fewer when the file is shorter."
+  [path n]
+  (with-open [^InputStream input (io/input-stream path)]
+    (let [buffer (byte-array n)
+          read   (.readNBytes input buffer 0 n)]
+      (if (= read n)
+        buffer
+        (java.util.Arrays/copyOf buffer read)))))
+
+(defn validate-video-content!
+  "Check that `upload` really holds the video container it claims.
+
+  The backend cannot transcode video, so the bytes are stored and served
+  back verbatim; refusing a mislabelled container here keeps us from
+  handing out arbitrary content under a `video/*` content type."
+  [{:keys [path mtype] :as upload}]
+  (let [head (read-head path 12)
+        ok?  (case mtype
+               ;; ISO-BMFF: a box length, then the `ftyp` box type
+               "video/mp4"  (and (>= (alength head) 12)
+                                 (= "ftyp" (String. head 4 4 "ISO-8859-1")))
+               "video/webm" (and (>= (alength head) 4)
+                                 (bb/equals? webm-magic (java.util.Arrays/copyOf head 4)))
+               false)]
+    (when-not ok?
+      (ex/raise :type :validation
+                :code :media-type-mismatch
+                :hint (str/ffmt "uploaded content does not look like a % file" mtype)))
+    upload))
+
 (defn validate-media-size!
   [upload]
   (let [max-size (cf/get :media-max-file-size)]

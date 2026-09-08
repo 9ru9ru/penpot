@@ -13,6 +13,7 @@
    [app.main.data.modal :as modal]
    [app.main.data.workspace :as dw]
    [app.main.data.workspace.common :as dwc]
+   [app.main.data.workspace.embed :as dwe]
    [app.main.data.workspace.mcp :as mcp]
    [app.main.data.workspace.media :as dwm]
    [app.main.data.workspace.shortcuts :as sc]
@@ -22,6 +23,7 @@
    [app.main.ui.components.dropdown-menu :refer [dropdown-menu* dropdown-menu-item*]]
    [app.main.ui.components.file-uploader :refer [file-uploader]]
    [app.main.ui.context :as ctx]
+   [app.main.ui.ds.foundations.assets.icon :as i :refer [icon*]]
    [app.main.ui.icons :as deprecated-icon]
    [app.util.dom :as dom]
    [app.util.i18n :as i18n :refer [tr]]
@@ -121,6 +123,42 @@
       [:& file-uploader
        {:input-id "image-upload"
         :accept dwm/accept-image-types
+        :multi true
+        :ref ref
+        :on-selected on-selected}]]]))
+
+(mf/defc video-upload*
+  {::mf/wrap [mf/memo]}
+  []
+  (let [ref (mf/use-ref nil)
+
+        on-click
+        (mf/use-fn
+         (fn []
+           (st/emit! :interrupt (dw/clear-edition-mode))
+           (dom/click (mf/ref-val ref))))
+
+        on-selected
+        (mf/use-fn
+         (fn [blobs]
+           ;; Read the viewbox on the callback instead of taking a ref,
+           ;; which would redraw this component on every change
+           (let [vbox (deref refs/vbox)
+                 x    (+ (:x vbox) (/ (:width vbox) 2))
+                 y    (+ (:y vbox) (/ (:height vbox) 2))]
+             (doseq [blob blobs]
+               (st/emit! (dwe/upload-video {:blob blob
+                                            :position (gpt/point x y)}))))))]
+    [:li
+     [:button
+      {:title (tr "workspace.toolbar.video")
+       :aria-label (tr "workspace.toolbar.video")
+       :on-click on-click
+       :class (stl/css :main-toolbar-options-button)}
+      [:> icon* {:icon-id i/play}]
+      [:& file-uploader
+       {:input-id "video-upload"
+        :accept dwe/accept-video-types
         :multi true
         :ref ref
         :on-selected on-selected}]]]))
@@ -241,6 +279,7 @@
            deprecated-icon/text]]
 
          [:> image-upload*]
+         [:> video-upload*]
 
          [:li
           [:button

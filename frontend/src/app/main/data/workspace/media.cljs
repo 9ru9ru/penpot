@@ -85,12 +85,20 @@
                                  :id id
                                  :keep-aspect-ratio true}})
 
-            shape {:name name
-                   :width width
-                   :height height
-                   :x (mth/round (- x (/ width 2)))
-                   :y (mth/round (- y (/ height 2)))
-                   :fills fills}]
+            shape (cond-> {:name name
+                           :width width
+                           :height height
+                           :x (mth/round (- x (/ width 2)))
+                           :y (mth/round (- y (/ height 2)))
+                           :fills fills}
+
+                    ;; Skia decodes only the first frame of a GIF, so an
+                    ;; animated one is tagged as an embed and replayed by
+                    ;; the viewer overlay instead of by the renderer
+                    (= mtype "image/gif")
+                    (assoc :embed {:kind :gif
+                                   :media-id id
+                                   :loop true}))]
 
         (rx/of (dwsh/create-and-add-shape :rect x y shape))))))
 
@@ -123,17 +131,38 @@
   "Uploads `blob` to `file-id` as a chunked media object using the
   three-step session API.  Returns an observable that emits the
   assembled file-media-object map."
-  [{:keys [file-id name is-local blob]}]
+  [{:keys [file-id name is-local blob width height]}]
   (let [mtype (.-type blob)]
     (->> (uploads/upload-blob-chunked blob)
          (rx/mapcat
           (fn [{:keys [session-id]}]
             (rp/cmd! :assemble-file-media-object
-                     {:session-id session-id
-                      :file-id    file-id
-                      :is-local   is-local
-                      :name       name
-                      :mtype      mtype}))))))
+                     (d/without-nils
+                      {:session-id session-id
+                       :file-id    file-id
+                       :is-local   is-local
+                       :name       name
+                       :mtype      mtype
+                       :width      width
+                       :height     height})))))))
+
+(defn upload-blob
+  "Upload `blob` as a file media object of `file-id`.
+
+  Picks the chunked session API when the blob is too big for a single
+  request. `:width`/`:height` are only read by the backend for videos,
+  which it cannot probe on its own."
+  [{:keys [file-id name is-local blob width height] :as params}]
+  (if (>= (.-size blob) chunk-size)
+    (upload-blob-chunked params)
+    (rp/cmd! :upload-file-media-object
+             (d/without-nils
+              {:file-id  file-id
+               :name     name
+               :is-local is-local
+               :content  blob
+               :width    width
+               :height   height}))))
 
 (defn process-uris
   [{:keys [file-id local? name uris mtype on-image on-svg]}]
@@ -223,6 +252,9 @@
 
       (= (:code error) :invalid-image)
       (rx/of (ntf/error (tr "errors.media-type-not-allowed")))
+
+      (= (:code error) :invalid-video)
+      (rx/of (ntf/error (tr "errors.invalid-video")))
 
       (= (:code error) :media-max-file-size-reached)
       (rx/of (ntf/error (tr "errors.media-too-large")))
