@@ -12,10 +12,12 @@
   (:require
    [app.common.geom.point :as gpt]
    [app.common.geom.rect :as grc]
+   [app.common.geom.shapes :as gsh]
    [app.common.geom.shapes.flex-layout :as gslf]
    [app.common.geom.shapes.grid-layout :as gslg]
    [app.common.math :as mth]
    [app.common.types.container :as ctn]
+   [app.common.types.modifiers :as ctm]
    [app.common.types.path :as path]
    [app.common.types.shape :as cts]
    [app.common.types.shape-tree :as ctst]
@@ -86,6 +88,31 @@
                          (cond-> (some? drop-cell)
                            (with-meta {:cell drop-cell})))))))))
 
+(defn- normalize-angle
+  "Rebuild the segment as a horizontal one carrying the drag angle as the
+  shape rotation.
+
+  Stored as a plain diagonal, a line has an axis-aligned bounding box and
+  no rotation of its own, so the sidebar reports 0 degrees for a visibly
+  slanted line and offers no field to straighten it with. Keeping the
+  angle in `:rotation` — the way a line behaves in Figma — makes that
+  control read and drive the real angle."
+  [shape origin end]
+  (let [v      (gpt/to-vec origin end)
+        len    (gpt/length v)
+        center (gpt/add origin (gpt/scale v 0.5))
+        angle  (mod (mth/degrees (mth/atan2 (:y v) (:x v))) 360)
+        half   (/ len 2)
+        shape  (-> shape
+                   (assoc :content (path/points->content
+                                    [(gpt/point (- (:x center) half) (:y center))
+                                     (gpt/point (+ (:x center) half) (:y center))]))
+                   ;; `setup-path` keeps whatever selrect it is handed, so
+                   ;; the stale one has to go for it to be recomputed
+                   (dissoc :selrect :points)
+                   (cts/setup-shape))]
+    (gsh/transform-shape shape (ctm/rotation-modifiers shape center angle))))
+
 (defn- finish-drawing
   [origin]
   (ptk/reify ::finish-drawing
@@ -93,11 +120,11 @@
     (update [_ state]
       (update-in state [:workspace-drawing :object]
                  (fn [{:keys [::end] :as shape}]
-                   (-> shape
-                       (dissoc ::end)
-                       (cond-> (or (nil? end)
-                                   (< (gpt/distance origin end) min-length))
-                         (assoc :initialized? false))))))))
+                   (let [shape (dissoc shape ::end)]
+                     (if (or (nil? end)
+                             (< (gpt/distance origin end) min-length))
+                       (assoc shape :initialized? false)
+                       (normalize-angle shape origin end))))))))
 
 (defn handle-drawing
   "Draw a line, or an arrow when `tool` is `:arrow`, by dragging."
