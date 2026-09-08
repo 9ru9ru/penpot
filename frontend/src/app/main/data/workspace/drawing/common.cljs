@@ -10,6 +10,7 @@
    [app.common.geom.point :as gpt]
    [app.common.geom.rect :as grc]
    [app.common.geom.shapes :as gsh]
+   [app.common.types.color :as clr]
    [app.common.types.modifiers :as ctm]
    [app.common.types.path :as path]
    [app.common.types.shape :as cts]
@@ -19,6 +20,45 @@
    [app.main.worker :as mw]
    [beicon.v2.core :as rx]
    [potok.v2.core :as ptk]))
+
+;; --- Stroke used by the freehand tools
+
+(def stroke-tools
+  "Tools whose result is a stroked path rather than a filled box."
+  #{:path :curve :line :arrow})
+
+(def default-draw-stroke
+  "Matches the stroke `cts/setup-shape` gives a bare path, so turning
+  this into an editable default changes nothing until it is edited."
+  {:stroke-style :solid
+   :stroke-alignment :inner
+   :stroke-width 1
+   :stroke-color clr/black
+   :stroke-opacity 1})
+
+(defn get-draw-stroke
+  "Stroke the next freehand, line or arrow shape will be drawn with."
+  [state]
+  (merge default-draw-stroke (get state :workspace-draw-stroke)))
+
+(defn update-draw-stroke
+  "Merge `attrs` into the stroke used by the freehand tools.
+
+  This is a drawing preference, not a shape edit: it applies to shapes
+  drawn from now on and leaves the existing ones alone."
+  [attrs]
+  (ptk/reify ::update-draw-stroke
+    ptk/UpdateEvent
+    (update [_ state]
+      (let [stroke (merge (get-draw-stroke state) attrs)
+            tool   (get-in state [:workspace-drawing :tool])]
+        (cond-> (assoc state :workspace-draw-stroke stroke)
+          ;; The path tool builds its shape the moment the tool is
+          ;; picked, so patch that one too — otherwise the change would
+          ;; only show up on the path after the one being drawn.
+          (and (contains? stroke-tools tool)
+               (some? (get-in state [:workspace-drawing :object])))
+          (assoc-in [:workspace-drawing :object :strokes] [stroke]))))))
 
 (defn- click-draw-box
   [shape width height]

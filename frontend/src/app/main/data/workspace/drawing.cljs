@@ -22,6 +22,7 @@
 (declare start-drawing)
 (declare handle-drawing)
 
+
 ;; --- Select for Drawing
 
 (defn select-for-drawing
@@ -83,11 +84,11 @@
   [type]
   (ptk/reify ::handle-drawing
     ptk/WatchEvent
-    (watch [_ _ _]
+    (watch [_ state _]
       (rx/of
        (case type
          :path  (path/handle-drawing)
-         :curve (curve/handle-drawing)
+         :curve (curve/handle-drawing (common/get-draw-stroke state))
          :line  (line/handle-drawing :line)
          :arrow (line/handle-drawing :arrow)
          (box/handle-drawing type))))))
