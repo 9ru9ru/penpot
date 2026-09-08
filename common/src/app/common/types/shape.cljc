@@ -19,6 +19,7 @@
    [app.common.schema.generators :as sg]
    [app.common.transit :as t]
    [app.common.types.color :as clr]
+   [app.common.types.embed :as ctem]
    [app.common.types.fills :refer [schema:fills fill->color]]
    [app.common.types.grid :as ctg]
    [app.common.types.path :as path]
@@ -233,6 +234,7 @@
    [:grow-type {:optional true}
     [::sm/one-of grow-types]]
    [:applied-tokens {:optional true} cto/schema:applied-tokens]
+   [:embed {:optional true} ctem/schema:embed]
    [:plugin-data {:optional true} ctpg/schema:plugin-data]])
 
 (def schema:group-attrs
@@ -431,7 +433,7 @@
     :hidden :masked-group :fills :proportion :proportion-lock :constraints-h
     :constraints-v :fixed-scroll :r1 :r2 :r3 :r4 :rotation :opacity :grids :exports
     :strokes :blend-mode :interactions :shadow :blur :background-blur :grow-type :applied-tokens
-    :plugin-data})
+    :embed :plugin-data})
 
 (def ^:private allowed-shape-geom-attrs #{:x :y :width :height})
 (def ^:private allowed-shape-base-attrs #{:id :name :type :selrect :points :transform

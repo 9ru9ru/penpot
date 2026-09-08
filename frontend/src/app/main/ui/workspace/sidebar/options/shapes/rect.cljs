@@ -11,6 +11,7 @@
    [app.main.refs :as refs]
    [app.main.ui.workspace.sidebar.options.menus.blur :refer [blur-menu*]]
    [app.main.ui.workspace.sidebar.options.menus.constraints :refer [constraint-attrs constraints-menu*]]
+   [app.main.ui.workspace.sidebar.options.menus.embed :refer [embed-menu*]]
    [app.main.ui.workspace.sidebar.options.menus.exports :refer [exports-menu* exports-attrs]]
    [app.main.ui.workspace.sidebar.options.menus.fill :as fill]
    [app.main.ui.workspace.sidebar.options.menus.grid-cell :as grid-cell]
@@ -120,6 +121,9 @@
      (when (or (not ^boolean is-layout-child?) ^boolean is-layout-child-absolute?)
        [:> constraints-menu* {:ids ids
                               :values constraint-values}])
+
+     [:> embed-menu* {:ids ids
+                      :values shape}]
 
      [:> fill/fill-menu*
       {:ids ids

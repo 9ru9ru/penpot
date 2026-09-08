@@ -27,6 +27,7 @@
    [app.main.ui.icons :as deprecated-icon]
    [app.main.ui.modal :refer [modal-container*]]
    [app.main.ui.viewer.comments :refer [comments-layer comments-sidebar*]]
+   [app.main.ui.viewer.embeds :as embeds]
    [app.main.ui.viewer.header :as header]
    [app.main.ui.viewer.inspect :as inspect]
    [app.main.ui.viewer.interactions :as interactions]
@@ -193,7 +194,12 @@
            :size size
            :delta delta
            :page page
-           :interactions-mode interactions-mode}]]]
+           :interactions-mode interactions-mode}]
+         [:> embeds/embeds-overlay*
+          {:objects (:objects page)
+           :frame overlay-frame
+           :origin size
+           :zoom zoom}]]]
 
        [:div {:class (stl/css :viewer-overlay :viewport-container)
               :id (dm/str "overlay-" (:id overlay-frame))
@@ -208,7 +214,12 @@
           :size size
           :delta delta
           :page page
-          :interactions-mode interactions-mode}]])]))
+          :interactions-mode interactions-mode}]
+        [:> embeds/embeds-overlay*
+         {:objects (:objects page)
+          :frame overlay-frame
+          :origin size
+          :zoom zoom}]])]))
 
 (mf/defc viewer-wrapper
   {::mf/wrap-props false}
@@ -258,6 +269,12 @@
         :size size
         :page page
         :interactions-mode interactions-mode}]
+
+      [:> embeds/embeds-overlay*
+       {:objects (:objects page)
+        :frame frame
+        :origin size
+        :zoom zoom}]
 
       (for [overlay overlays]
         [:& viewer-overlay

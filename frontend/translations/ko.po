@@ -554,6 +554,10 @@ msgstr "선택 영역 내보내기"
 msgid "dashboard.export-standard-multi"
 msgstr "표준 파일 %s개(.svg + .json) 다운로드"
 
+#: src/app/main/data/workspace/media.cljs
+msgid "errors.invalid-video"
+msgstr "브라우저가 이 동영상을 읽지 못했습니다."
+
 #: src/app/main/ui/exports/files.cljs:132
 msgid "files-download-modal.description-1"
 msgstr ""
@@ -2940,6 +2944,10 @@ msgstr "방사형"
 #: src/app/main/ui/workspace/colorpicker.cljs:269
 msgid "media.solid"
 msgstr "단색"
+
+#: src/app/main/data/workspace/embed.cljs
+msgid "media.video"
+msgstr "동영상"
 
 #: src/app/main/data/common.cljs:118
 msgid "modals.add-shared-confirm-empty.hint"
@@ -5835,6 +5843,38 @@ msgstr "위아래"
 msgid "workspace.options.design"
 msgstr "디자인"
 
+#: src/app/main/ui/workspace/sidebar/options/menus/embed.cljs
+msgid "workspace.options.embed.autoplay"
+msgstr "자동 재생"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/embed.cljs
+msgid "workspace.options.embed.autoplay-hint"
+msgstr "브라우저는 음소거된 미디어만 자동 재생합니다."
+
+#: src/app/main/ui/workspace/sidebar/options/menus/embed.cljs
+msgid "workspace.options.embed.controls"
+msgstr "재생 컨트롤 표시"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/embed.cljs
+msgid "workspace.options.embed.detach"
+msgstr "재생 해제, 포스터는 유지"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/embed.cljs
+msgid "workspace.options.embed.loop"
+msgstr "반복"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/embed.cljs
+msgid "workspace.options.embed.muted"
+msgstr "음소거"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/embed.cljs
+msgid "workspace.options.embed.open-source"
+msgstr "원본을 새 탭에서 열기"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/embed.cljs
+msgid "workspace.options.embed.title"
+msgstr "재생"
+
 #: src/app/main/ui/inspect/exports.cljs:161
 msgid "workspace.options.export"
 msgstr "내보내기"
@@ -8001,6 +8041,10 @@ msgstr "타이포그래피 (%s)"
 #: src/app/main/ui/workspace/top_toolbar.cljs:289, src/app/main/ui/workspace/top_toolbar.cljs:290
 msgid "workspace.toolbar.toggle-toolbar"
 msgstr "도구 모음 켜기/끄기"
+
+#: src/app/main/ui/workspace/top_toolbar.cljs
+msgid "workspace.toolbar.video"
+msgstr "동영상 (임베드)"
 
 #: src/app/main/ui/workspace/viewport/top_bar.cljs:45
 msgid "workspace.top-bar.read-only.done"

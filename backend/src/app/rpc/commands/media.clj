@@ -9,6 +9,7 @@
    [app.common.data :as d]
    [app.common.exceptions :as ex]
    [app.common.logging :as l]
+   [app.common.media :as cm]
    [app.common.schema :as sm]
    [app.common.time :as ct]
    [app.common.uuid :as uuid]
@@ -36,6 +37,14 @@
    :quality 85
    :format :jpeg})
 
+(def ^:private upload-types
+  "Media types accepted as file media objects.
+
+  Videos are stored verbatim: ImageMagick cannot read them and the
+  backend image ships no ffmpeg, so their dimensions come from the
+  client, which has already decoded the file to extract a poster."
+  (into cm/image-types cm/video-types))
+
 ;; --- Create File Media object (upload)
 
 (declare create-file-media-object)
@@ -54,7 +63,10 @@
    [:file-id ::sm/uuid]
    [:is-local ::sm/boolean]
    [:name [:string {:max 250}]]
-   [:content media.v/schema:upload]])
+   [:content media.v/schema:upload]
+   ;; only read for video uploads, which the backend cannot probe
+   [:width {:optional true} ::sm/int]
+   [:height {:optional true} ::sm/int]])
 
 (sv/defmethod ::upload-file-media-object
   {::doc/added "1.17"
@@ -63,7 +75,7 @@
                 [:process-image/global]]}
   [{:keys [::db/pool] :as cfg} {:keys [::rpc/profile-id file-id content] :as params}]
   (files/check-edition-permissions! pool profile-id file-id)
-  (media.v/validate-media-type! content)
+  (media.v/validate-media-type! content upload-types)
   (media.v/validate-media-size! content)
 
   ;; TEMPORARILY DISABLED (2026-10-19): media-storage-bytes-per-team
@@ -107,6 +119,10 @@
 (defn- svg-image?
   [info]
   (= (:mtype info) "image/svg+xml"))
+
+(defn- video-content?
+  [content]
+  (cm/video-type? (:mtype content)))
 
 ;; NOTE: we use the `on conflict do update` instead of `do nothing`
 ;; because postgresql does not returns anything if no update is
@@ -166,6 +182,20 @@
      :content-type (:mtype thumb)
      :bucket "file-media-object"}))
 
+(defn- process-video
+  "Store an uploaded video verbatim.
+
+  No thumbnail is derived here: the client uploads a poster frame as a
+  separate image media object and uses it as the shape fill, which is
+  what every renderer and the exporter actually draw."
+  [content {:keys [width height]}]
+  (let [info (-> content
+                 (media.v/validate-video-content!)
+                 (assoc :ts (ct/now))
+                 (assoc :width (max 1 (or width 1)))
+                 (assoc :height (max 1 (or height 1))))]
+    (assoc info ::image (process-main-image info))))
+
 (defn- process-image
   [cfg content]
   (let [info (media/run cfg {:cmd :info :input content})]
@@ -179,10 +209,11 @@
 
 (defn- create-file-media-object
   [{:keys [::sto/storage ::db/conn] :as cfg}
-   {:keys [id file-id is-local name content from-url? from-chunks?]}]
+   {:keys [id file-id is-local name content from-url? from-chunks? width height]}]
 
   (let [tpoint (ct/tpoint)
         id     (or id (uuid/next))
+        video? (video-content? content)
         origin (cond
                  from-url?
                  "url"
@@ -199,7 +230,9 @@
            :path (str (:path content))
            :origin origin)
 
-    (let [result  (process-image cfg content)
+    (let [result  (if video?
+                    (process-video content {:width width :height height})
+                    (process-image cfg content))
           image   (sto/put-object! storage (::image result))
           thumb   (when-let [params (::thumb result)]
                     (sto/put-object! storage params))
@@ -496,7 +529,10 @@
    [:is-local   ::sm/boolean]
    [:name       [:string {:max 250}]]
    [:mtype      :string]
-   [:id         {:optional true} ::sm/user-provided-uuid]])
+   [:id         {:optional true} ::sm/user-provided-uuid]
+   ;; only read for video uploads, which the backend cannot probe
+   [:width      {:optional true} ::sm/int]
+   [:height     {:optional true} ::sm/int]])
 
 (sv/defmethod ::assemble-file-media-object
   {::doc/added "2.17"
@@ -513,7 +549,7 @@
                       content (-> content
                                   (assoc :filename (str "upload:" name))
                                   (assoc :mtype mtype)
-                                  (media.v/validate-media-type!)
+                                  (media.v/validate-media-type! upload-types)
                                   (media.v/validate-media-size!))
                       mobj    (create-file-media-object cfg (assoc params
                                                                    :id id

@@ -37,6 +37,7 @@
    [app.main.ui.workspace.viewport.comments :as comments]
    [app.main.ui.workspace.viewport.debug :as wvd]
    [app.main.ui.workspace.viewport.drawarea :as drawarea]
+   [app.main.ui.workspace.viewport.embeds :as viewport.embeds]
    [app.main.ui.workspace.viewport.frame-grid :as frame-grid]
    [app.main.ui.workspace.viewport.gradients :as gradients]
    [app.main.ui.workspace.viewport.grid-layout-editor :as grid-layout]
@@ -902,6 +903,8 @@
            :selected selected
            :selected-shapes selected-shapes
            :page-id page-id}])
+
+       [:> viewport.embeds/embed-badges* {:zoom zoom}]
 
        (when show-cursor-tooltip?
          [:> widgets/cursor-tooltip* {:zoom zoom

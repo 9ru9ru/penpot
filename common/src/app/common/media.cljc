@@ -22,6 +22,19 @@
     "image/gif"
     "image/svg+xml"})
 
+(def video-types
+  "Containers accepted for uploaded video embeds.
+
+  Kept deliberately small: these are the two every browser can play
+  natively, and the backend stores them verbatim instead of running them
+  through ImageMagick."
+  #{"video/mp4"
+    "video/webm"})
+
+(defn video-type?
+  [mtype]
+  (contains? video-types mtype))
+
 (def tempfile-types
   (conj image-types "application/pdf" "application/zip"))
 
@@ -38,6 +51,8 @@
   (into (sorted-set)
         (concat image-types
                 font-types
+                ;; uploaded video embeds, stored verbatim
+                video-types
                 ["application/octet-stream"
                  "application/pdf"
                  "application/zip"])))
@@ -49,7 +64,9 @@
     :jpeg ".jpg"
     :webp ".webp"
     :gif ".gif"
-    :svg  ".svg"))
+    :svg  ".svg"
+    :mp4  ".mp4"
+    :webm ".webm"))
 
 (defn format->mtype
   [format]
@@ -60,6 +77,8 @@
     :webp "image/webp"
     :gif "image/gif"
     :svg  "image/svg+xml"
+    :mp4  "video/mp4"
+    :webm "video/webm"
     "application/octet-stream"))
 
 (defn mtype->format
@@ -70,6 +89,8 @@
     "image/webp"    :webp
     "image/gif"     :gif
     "image/svg+xml" :svg
+    "video/mp4"     :mp4
+    "video/webm"    :webm
     nil))
 
 (defn mtype->extension [mtype]
@@ -82,6 +103,8 @@
     "image/png"                ".png"
     "image/svg+xml"            ".svg"
     "image/webp"               ".webp"
+    "video/mp4"                ".mp4"
+    "video/webm"               ".webm"
     "application/zip"          ".zip"
     "application/penpot"       ".penpot"
     "application/pdf"          ".pdf"

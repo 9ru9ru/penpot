@@ -1673,6 +1673,10 @@ msgstr "The recovery token is invalid."
 msgid "errors.invalid-text"
 msgstr "Invalid text"
 
+#: src/app/main/data/workspace/media.cljs
+msgid "errors.invalid-video"
+msgstr "This video could not be read by the browser."
+
 #: src/app/main/ui/static.cljs:89
 msgid "errors.invite-email-mismatch"
 msgstr ""
@@ -3814,6 +3818,10 @@ msgstr "Radial"
 #: src/app/main/ui/workspace/colorpicker.cljs:269
 msgid "media.solid"
 msgstr "Solid"
+
+#: src/app/main/data/workspace/embed.cljs
+msgid "media.video"
+msgstr "Video"
 
 #: src/app/main/data/common.cljs:118
 msgid "modals.add-shared-confirm-empty.hint"
@@ -7725,6 +7733,38 @@ msgstr "Create typography style"
 msgid "workspace.options.design"
 msgstr "Design"
 
+#: src/app/main/ui/workspace/sidebar/options/menus/embed.cljs
+msgid "workspace.options.embed.autoplay"
+msgstr "Autoplay"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/embed.cljs
+msgid "workspace.options.embed.autoplay-hint"
+msgstr "Browsers only autoplay muted media."
+
+#: src/app/main/ui/workspace/sidebar/options/menus/embed.cljs
+msgid "workspace.options.embed.controls"
+msgstr "Show controls"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/embed.cljs
+msgid "workspace.options.embed.detach"
+msgstr "Remove playback, keep the poster"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/embed.cljs
+msgid "workspace.options.embed.loop"
+msgstr "Loop"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/embed.cljs
+msgid "workspace.options.embed.muted"
+msgstr "Muted"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/embed.cljs
+msgid "workspace.options.embed.open-source"
+msgstr "Open source in a new tab"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/embed.cljs
+msgid "workspace.options.embed.title"
+msgstr "Playback"
+
 #: src/app/main/ui/inspect/exports.cljs:161
 msgid "workspace.options.export"
 msgstr "Export"
@@ -10101,6 +10141,10 @@ msgstr "Typographies (%s)"
 #: src/app/main/ui/workspace/top_toolbar.cljs:289, src/app/main/ui/workspace/top_toolbar.cljs:290
 msgid "workspace.toolbar.toggle-toolbar"
 msgstr "Toggle toolbar"
+
+#: src/app/main/ui/workspace/top_toolbar.cljs
+msgid "workspace.toolbar.video"
+msgstr "Video (embed)"
 
 #: src/app/main/ui/workspace/viewport/top_bar.cljs:45
 msgid "workspace.top-bar.read-only.done"

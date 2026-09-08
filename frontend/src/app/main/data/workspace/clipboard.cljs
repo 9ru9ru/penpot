@@ -23,6 +23,7 @@
    [app.common.transit :as t]
    [app.common.types.component :as ctk]
    [app.common.types.container :as ctn]
+   [app.common.types.embed :as ctem]
    [app.common.types.file :as ctf]
    [app.common.types.shape :as cts]
    [app.common.types.shape-tree :as ctst]
@@ -39,6 +40,7 @@
    [app.main.data.helpers :as dsh]
    [app.main.data.notifications :as ntf]
    [app.main.data.persistence :as dps]
+   [app.main.data.workspace.embed :as dwemb]
    [app.main.data.workspace.media :as dwm]
    [app.main.data.workspace.selection :as dws]
    [app.main.data.workspace.shapes :as dwsh]
@@ -1094,37 +1096,45 @@
                                                           :undo-id undo-id}))
                (rx/of (dwu/commit-undo-transaction undo-id))))))))))
 
+(defn- paste-text-shape
+  [state text]
+  (let [id            (uuid/next)
+        width         (max 8 (min (* 7 (count text)) 700))
+        height        16
+        {:keys [x y]} (calculate-paste-position state)
+        skip-edition? (features/active-feature? state "text-editor-wasm/v1")
+
+        shape {:id id
+               :type :text
+               :name (txt/generate-shape-name text)
+               :x x
+               :y y
+               :width width
+               :height height
+               :grow-type (if (> (count text) 100) :auto-height :auto-width)
+               :content (as-content text)}
+        undo-id (js/Symbol)]
+
+    (rx/concat
+     (rx/of (dwu/start-undo-transaction undo-id)
+            (dwsh/create-and-add-shape :text x y shape
+                                       (when skip-edition? {:skip-edition? true})))
+     (if skip-edition?
+       (rx/of (dwwt/resize-wasm-text-debounce id {:undo-group id
+                                                  :undo-id undo-id}))
+       (rx/of (dwu/commit-undo-transaction undo-id))))))
+
 (defn- paste-text
   [text]
   (dm/assert! (string? text))
   (ptk/reify ::paste-text
     ptk/WatchEvent
     (watch [_ state _]
-      (let [id            (uuid/next)
-            width         (max 8 (min (* 7 (count text)) 700))
-            height        16
-            {:keys [x y]} (calculate-paste-position state)
-            skip-edition? (features/active-feature? state "text-editor-wasm/v1")
-
-            shape {:id id
-                   :type :text
-                   :name (txt/generate-shape-name text)
-                   :x x
-                   :y y
-                   :width width
-                   :height height
-                   :grow-type (if (> (count text) 100) :auto-height :auto-width)
-                   :content (as-content text)}
-            undo-id (js/Symbol)]
-
-        (rx/concat
-         (rx/of (dwu/start-undo-transaction undo-id)
-                (dwsh/create-and-add-shape :text x y shape
-                                           (when skip-edition? {:skip-edition? true})))
-         (if skip-edition?
-           (rx/of (dwwt/resize-wasm-text-debounce id {:undo-group id
-                                                      :undo-id undo-id}))
-           (rx/of (dwu/commit-undo-transaction undo-id))))))))
+      (if (ctem/embeddable-url? text)
+        ;; a bare provider link becomes a playable embed rather than a
+        ;; text shape holding the URL
+        (rx/of (dwemb/create-embed-from-url text (calculate-paste-position state)))
+        (paste-text-shape state text)))))
 
 ;; TODO: why not implement it in terms of upload-media-workspace?
 (defn- paste-svg-text

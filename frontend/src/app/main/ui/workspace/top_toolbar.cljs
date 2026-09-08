@@ -15,6 +15,7 @@
    [app.main.data.workspace :as dw]
    [app.main.data.workspace.common :as dwc]
    [app.main.data.workspace.drawing.common :as dwdc]
+   [app.main.data.workspace.embed :as dwe]
    [app.main.data.workspace.mcp :as mcp]
    [app.main.data.workspace.media :as dwm]
    [app.main.data.workspace.shortcuts :as sc]
@@ -294,6 +295,43 @@
                                       :ref ref
                                       :on-selected on-selected}]]))
 
+(mf/defc video-upload-tool*
+  "Uploads mp4/webm files as video embeds at the viewport centre."
+  {::mf/private true
+   ::mf/wrap [mf/memo]}
+  []
+  (let [ref (mf/use-ref nil)
+
+        on-display-uploader
+        (mf/use-fn
+         (fn []
+           (st/emit! :interrupt (dw/clear-edition-mode))
+           (dom/click (mf/ref-val ref))))
+
+        on-selected
+        (mf/use-fn
+         (fn [blobs]
+           ;; Read the viewbox on the callback instead of taking a ref,
+           ;; which would redraw this component on every change
+           (let [vbox (deref refs/vbox)
+                 x    (+ (:x vbox) (/ (:width vbox) 2))
+                 y    (+ (:y vbox) (/ (:height vbox) 2))]
+             (doseq [blob blobs]
+               (st/emit! (dwe/upload-video {:blob blob
+                                            :position (gpt/point x y)}))))))]
+
+    [:*
+     [:> icon-button* {:variant "ghost"
+                       :tooltip-placement "bottom"
+                       :aria-label (tr "workspace.toolbar.video")
+                       :icon i/play
+                       :on-click on-display-uploader}]
+     [:& file-uploader/file-uploader {:input-id "video-upload"
+                                      :accept dwe/accept-video-types
+                                      :multi true
+                                      :ref ref
+                                      :on-selected on-selected}]]))
+
 (mf/defc mcp-tool*
   {::mf/private true
    ::mf/wrap [mf/memo]}
@@ -450,6 +488,9 @@
 
         [:li {:class (stl/css :toolbar-option)}
          [:> image-upload-tool*]]
+
+        [:li {:class (stl/css :toolbar-option)}
+         [:> video-upload-tool*]]
 
         [:> group-tool* {:key :free-draw
                          :group (get grouped-tools :free-draw)
