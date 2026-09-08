@@ -4,20 +4,32 @@
 //
 // Copyright (c) KALEIDOS INC Sucursal en España SL
 
-// The badge is a marker, not a control: it must never intercept a click
-// meant for the shape underneath it.
+// The group is transparent to the pointer so it never swallows a click
+// meant for a shape; only the badge itself takes events.
 .embed-badges {
   pointer-events: none;
 }
 
 .embed-badge {
-  pointer-events: none;
+  pointer-events: auto;
+  cursor: pointer;
 }
 
 .embed-badge-bg {
   fill: rgb(0 0 0 / 0.55);
 }
 
+.embed-badge:hover .embed-badge-bg {
+  fill: rgb(0 0 0 / 0.8);
+}
+
 .embed-badge-glyph {
   fill: var(--color-foreground-primary, #ffffff);
+}
+
+.embed-canvas-player {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: auto;
 }

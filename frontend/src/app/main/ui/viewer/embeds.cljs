@@ -64,7 +64,7 @@
              :transform-origin "center"))))
 
 (mf/defc embed-player*
-  {::mf/private true}
+  "The media element itself; shared with the workspace canvas player."
   [{:keys [embed]}]
   (let [{:keys [kind media-id autoplay loop muted controls]} embed]
     (if (contains? ctem/iframe-kinds kind)
