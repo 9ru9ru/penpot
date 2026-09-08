@@ -4040,6 +4040,10 @@ msgstr "노드 삭제"
 msgid "shortcuts.detach-component"
 msgstr "컴포넌트 해제"
 
+#: src/app/main/data/workspace/shortcuts.cljs
+msgid "shortcuts.draw-arrow"
+msgstr "화살표"
+
 #: src/app/main/ui/workspace/sidebar/shortcuts.cljs:104
 msgid "shortcuts.draw-curve"
 msgstr "곡선"
@@ -4051,6 +4055,10 @@ msgstr "타원"
 #: src/app/main/ui/workspace/sidebar/shortcuts.cljs:106
 msgid "shortcuts.draw-frame"
 msgstr "보드"
+
+#: src/app/main/data/workspace/shortcuts.cljs
+msgid "shortcuts.draw-line"
+msgstr "선"
 
 #: src/app/main/ui/workspace/sidebar/shortcuts.cljs:107
 msgid "shortcuts.draw-nodes"
@@ -7984,6 +7992,10 @@ msgstr "값이 유효하지 않습니다"
 msgid "workspace.tokens.warning-name-change"
 msgstr "이 token의 이름을 바꾸면 기존 이름에 대한 참조가 끊어집니다"
 
+#: src/app/main/ui/workspace/top_toolbar.cljs
+msgid "workspace.toolbar.arrow"
+msgstr "화살표 (%s)"
+
 #: src/app/main/ui/workspace/sidebar.cljs:159, src/app/main/ui/workspace/sidebar.cljs:166
 msgid "workspace.toolbar.assets"
 msgstr "에셋"
@@ -8020,6 +8032,10 @@ msgstr "보드를 만듭니다. 클릭하고 드래그하여 크기를 정의합
 #: src/app/main/ui/workspace/top_toolbar.cljs:116, src/app/main/ui/workspace/top_toolbar.cljs:117
 msgid "workspace.toolbar.image"
 msgstr "이미지 (%s)"
+
+#: src/app/main/ui/workspace/top_toolbar.cljs
+msgid "workspace.toolbar.line"
+msgstr "선 (%s)"
 
 #: src/app/main/ui/workspace/top_toolbar.cljs:199, src/app/main/ui/workspace/top_toolbar.cljs:200
 msgid "workspace.toolbar.move"

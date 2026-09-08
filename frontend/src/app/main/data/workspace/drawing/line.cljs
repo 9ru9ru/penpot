@@ -5,16 +5,11 @@
 ;; Copyright (c) KALEIDOS INC Sucursal en España SL
 
 (ns app.main.data.workspace.drawing.line
-  "Drawing handler for the Line (L) and Arrow (Shift+L) tools.
+  "Straight line and arrow drawing.
 
-   Unlike the Path (P) tool, which builds a multi-node path via
-   successive clicks, Line/Arrow uses a single press-and-drag
-   gesture (matching Figma/Sketch/XD). The result is always a
-   two-node path from the drag start to the drag end. The Arrow
-   variant additionally pre-configures an arrow stroke cap at
-   the end so designers do not have to set it manually."
+  Both tools produce a two-point `:path`; the arrow differs only in the
+  end cap, which the renderers already know how to draw."
   (:require
-   [app.common.data.macros :as dm]
    [app.common.geom.point :as gpt]
    [app.common.geom.rect :as grc]
    [app.common.geom.shapes.flex-layout :as gslf]
@@ -33,54 +28,54 @@
    [beicon.v2.core :as rx]
    [potok.v2.core :as ptk]))
 
-(def ^:private snap-step-deg 15)
+;; Below this a drag reads as a stray click rather than a line, and the
+;; shape is discarded instead of being created as a dot.
+(def ^:private min-length 2)
 
-(defn- snap-to-angle
-  "Snaps `point` relative to `origin` to the nearest multiple of
-  `snap-step-deg` degrees on a circle of the same radius. Used when
-  Shift is held while drawing a line."
+(def ^:private snap-step (/ mth/PI 4))
+
+(defn- snap-to-45
+  "Project `point` onto the nearest 45° ray from `origin`, the way Figma
+  constrains a line while shift is held."
   [origin point]
-  (let [dx    (- (:x point) (:x origin))
-        dy    (- (:y point) (:y origin))
-        r     (mth/sqrt (+ (* dx dx) (* dy dy)))
-        angle (mth/atan2 dy dx)
-        step  (/ (* mth/PI snap-step-deg) 180)
-        snapped (* step (mth/round (/ angle step)))]
-    (gpt/point (+ (:x origin) (* r (mth/cos snapped)))
-               (+ (:y origin) (* r (mth/sin snapped))))))
+  (let [v (gpt/to-vec origin point)
+        l (gpt/length v)]
+    (if (< l min-length)
+      point
+      (let [angle (mth/round (mth/atan2 (:y v) (:x v)) snap-step)]
+        (gpt/add origin (gpt/point (* l (mth/cos angle))
+                                   (* l (mth/sin angle))))))))
 
-(defn- update-endpoint
-  "Rebuilds the two-node line shape with `start` as the first node
-  and `end-point` as the second. Called on every drag frame."
-  [start end-point]
-  (fn [state]
-    (update-in state [:workspace-drawing :object]
-               (fn [object]
-                 (let [points  [start end-point]
-                       content (path/points->content points)
-                       selrect (path/calc-selrect content)
-                       points' (grc/rect->points selrect)]
-                   (-> object
-                       (assoc :content content)
-                       (assoc :selrect selrect)
-                       (assoc :points points')
-                       (assoc :click-draw? false)))))))
+(defn- update-line
+  [state origin point shift?]
+  (update-in state [:workspace-drawing :object]
+             (fn [object]
+               (let [point   (cond-> point shift? (->> (snap-to-45 origin)))
+                     content (path/points->content [origin point])
+                     selrect (path/calc-selrect content)]
+                 (-> object
+                     (assoc ::end point)
+                     (assoc :content content)
+                     (assoc :selrect selrect)
+                     (assoc :points (grc/rect->points selrect)))))))
 
 (defn- setup-frame
-  []
+  "Attach the drawing shape to the board under its start point."
+  [origin]
   (ptk/reify ::setup-frame
     ptk/UpdateEvent
     (update [_ state]
-      (let [objects      (dsh/lookup-page-objects state)
-            content      (dm/get-in state [:workspace-drawing :object :content])
-            position     (path/get-handler-point content 0 nil)
-            frame-id     (->> (ctst/top-nested-frame objects position)
-                              (ctn/get-first-valid-parent objects)
-                              :id)
-            flex-layout? (ctl/flex-layout? objects frame-id)
-            grid-layout? (ctl/grid-layout? objects frame-id)
-            drop-index   (when flex-layout? (gslf/get-drop-index frame-id objects position))
-            drop-cell    (when grid-layout? (gslg/get-drop-cell frame-id objects position))]
+      (let [objects   (dsh/lookup-page-objects state)
+            frame-id  (->> (ctst/top-nested-frame objects origin)
+                           ;; We don't want to change the structure of
+                           ;; component copies
+                           (ctn/get-first-valid-parent objects)
+                           :id)
+            flex?     (ctl/flex-layout? objects frame-id)
+            grid?     (ctl/grid-layout? objects frame-id)
+            drop-index (when flex? (gslf/get-drop-index frame-id objects origin))
+            drop-cell  (when grid? (gslg/get-drop-cell frame-id objects origin))]
+
         (update-in state [:workspace-drawing :object]
                    (fn [object]
                      (-> object
@@ -91,68 +86,47 @@
                          (cond-> (some? drop-cell)
                            (with-meta {:cell drop-cell})))))))))
 
-(defn- finalize
-  "After mouse-up, mark the shape initialized only if it spans more
-  than a single point. A zero-length drag is a noop (e.g. the user
-  clicked without dragging)."
-  []
-  (ptk/reify ::finalize
+(defn- finish-drawing
+  [origin]
+  (ptk/reify ::finish-drawing
     ptk/UpdateEvent
     (update [_ state]
       (update-in state [:workspace-drawing :object]
-                 (fn [{:keys [content selrect] :as shape}]
-                   (cond-> shape
-                     (and (not (:click-draw? shape))
-                          (or (empty? content)
-                              (nil? selrect)
-                              (<= (count content) 1)))
-                     (assoc :initialized? false)))))))
-
-(defn- arrow-strokes
-  "Default stroke for the Arrow tool: a visible 1px solid line with
-  a triangular arrow cap on the end node. The Line tool uses the
-  same defaults minus the cap."
-  [arrow?]
-  (cond-> [{:stroke-color "#000000"
-            :stroke-opacity 1
-            :stroke-style :solid
-            :stroke-alignment :center
-            :stroke-width 1}]
-    arrow? (update 0 assoc :stroke-cap-end :triangle-arrow)))
+                 (fn [{:keys [::end] :as shape}]
+                   (-> shape
+                       (dissoc ::end)
+                       (cond-> (or (nil? end)
+                                   (< (gpt/distance origin end) min-length))
+                         (assoc :initialized? false))))))))
 
 (defn handle-drawing
-  "Runs the click-and-drag interaction for :line or :arrow. Produces
-  a two-node path shape with stroke (and an arrow cap when arrow?)."
-  [tool]
-  (let [arrow? (= tool :arrow)]
-    (ptk/reify ::handle-drawing
-      ptk/WatchEvent
-      (watch [_ state stream]
-        (let [stopper (mse/drag-stopper stream)
-              zoom    (dm/get-in state [:workspace-local :zoom] 1)
-              start   @ms/mouse-position
-              shape   (cts/setup-shape {:type :path
-                                        :initialized? true
-                                        :click-draw? true
-                                        :frame-id uuid/zero
-                                        :parent-id uuid/zero
-                                        :strokes (arrow-strokes arrow?)
-                                        :fills []
-                                        :content (path/points->content [start start])})]
-          (rx/concat
-           (rx/of #(update % :workspace-drawing assoc :object shape))
+  "Draw a line, or an arrow when `tool` is `:arrow`, by dragging."
+  [tool stroke]
+  (ptk/reify ::handle-drawing
+    ptk/WatchEvent
+    (watch [_ _ stream]
+      (let [stopper (mse/drag-stopper stream)
+            origin  @ms/mouse-position
+            stroke  (cond-> stroke
+                      (= tool :arrow)
+                      (assoc :stroke-cap-end :triangle-arrow))
 
-           (->> ms/mouse-position
-                (rx/filter #(> (* (gpt/distance % start) zoom) 10))
-                (rx/with-latest-from ms/mouse-position-shift)
-                (rx/map (fn [[point shift?]]
-                          (if shift?
-                            (snap-to-angle start point)
-                            point)))
-                (rx/map (partial update-endpoint start))
-                (rx/take-until stopper))
+            shape   (cts/setup-shape
+                     {:type :path
+                      :initialized? true
+                      :frame-id uuid/zero
+                      :parent-id uuid/zero
+                      :strokes [stroke]
+                      :content (path/points->content [origin origin])})]
 
-           (rx/of
-            (setup-frame)
-            (finalize)
-            (common/handle-finish-drawing))))))))
+        (rx/concat
+         (rx/of #(update % :workspace-drawing assoc :object shape))
+         (->> ms/mouse-position
+              (rx/with-latest-from ms/mouse-position-shift)
+              (rx/map (fn [[point shift?]]
+                        #(update-line % origin point shift?)))
+              (rx/take-until stopper))
+         (rx/of
+          (setup-frame origin)
+          (finish-drawing origin)
+          (common/handle-finish-drawing)))))))

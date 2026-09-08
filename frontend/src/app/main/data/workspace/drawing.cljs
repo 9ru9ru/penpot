@@ -89,8 +89,7 @@
        (case type
          :path  (path/handle-drawing)
          :curve (curve/handle-drawing (common/get-draw-stroke state))
-         :line  (line/handle-drawing :line)
-         :arrow (line/handle-drawing :arrow)
+         (:line :arrow) (line/handle-drawing type (common/get-draw-stroke state))
          (box/handle-drawing type))))))
 
 (defn change-orientation

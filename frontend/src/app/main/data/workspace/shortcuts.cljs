@@ -408,8 +408,10 @@
                           :subsections [:tools]
                           :fn #(emit-when-no-readonly (dw/toggle-lock-selected))}
 
-   :toggle-lock-size     {:tooltip (ds/shift "L")
-                          :command "shift+l"
+   ;; NOTE: this used to be Shift+L, which also draws an arrow; it moves so
+   ;; the line/arrow pair matches Figma's L / Shift+L.
+   :toggle-lock-size     {:tooltip (ds/shift "R")
+                          :command "shift+r"
                           :section [:workspace]
                           :subsections [:tools]
                           :fn #(emit-when-no-readonly (dw/toggle-proportion-lock))}
