@@ -97,7 +97,7 @@
                            (assoc :initialized? false)))))))))
 
 
-(defn handle-drawing []
+(defn handle-drawing [stroke]
   (ptk/reify ::handle-drawing
     ptk/WatchEvent
     (watch [_ _ stream]
@@ -107,6 +107,7 @@
                                       :initialized? true
                                       :frame-id uuid/zero
                                       :parent-id uuid/zero
+                                      :strokes [stroke]
                                       ::points []})]
         (rx/concat
          (rx/of #(update % :workspace-drawing assoc :object shape))

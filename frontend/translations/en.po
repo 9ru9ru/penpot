@@ -7473,6 +7473,18 @@ msgstr "Create typography style"
 msgid "workspace.options.design"
 msgstr "Design"
 
+#: src/app/main/ui/workspace/sidebar/options/drawing/stroke.cljs
+msgid "workspace.options.draw-stroke"
+msgstr "Stroke"
+
+#: src/app/main/ui/workspace/sidebar/options/drawing/stroke.cljs
+msgid "workspace.options.draw-stroke.arrow-hint"
+msgstr "Applies to the arrows you draw next. Hold Shift while dragging to snap to 45°."
+
+#: src/app/main/ui/workspace/sidebar/options/drawing/stroke.cljs
+msgid "workspace.options.draw-stroke.hint"
+msgstr "Applies to the shapes you draw next."
+
 #: src/app/main/ui/workspace/sidebar/options/menus/embed.cljs
 msgid "workspace.options.embed.autoplay"
 msgstr "Autoplay"

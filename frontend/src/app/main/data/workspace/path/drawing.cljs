@@ -326,7 +326,8 @@
   (ptk/reify ::handle-new-shape
     ptk/UpdateEvent
     (update [_ state]
-      (let [shape (cts/setup-shape {:type :path})]
+      (let [shape (cts/setup-shape {:type :path
+                                    :strokes [(dwdc/get-draw-stroke state)]})]
         (update state :workspace-drawing assoc :object shape)))
 
     ptk/WatchEvent

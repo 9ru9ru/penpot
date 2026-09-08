@@ -5867,6 +5867,18 @@ msgstr "위아래"
 msgid "workspace.options.design"
 msgstr "디자인"
 
+#: src/app/main/ui/workspace/sidebar/options/drawing/stroke.cljs
+msgid "workspace.options.draw-stroke"
+msgstr "선"
+
+#: src/app/main/ui/workspace/sidebar/options/drawing/stroke.cljs
+msgid "workspace.options.draw-stroke.arrow-hint"
+msgstr "지금부터 그리는 화살표에 적용됩니다. 드래그 중 Shift 를 누르면 45° 단위로 스냅됩니다."
+
+#: src/app/main/ui/workspace/sidebar/options/drawing/stroke.cljs
+msgid "workspace.options.draw-stroke.hint"
+msgstr "지금부터 그리는 도형에 적용됩니다."
+
 #: src/app/main/ui/workspace/sidebar/options/menus/embed.cljs
 msgid "workspace.options.embed.autoplay"
 msgstr "자동 재생"

@@ -7,17 +7,25 @@
 
 (ns app.main.ui.workspace.sidebar.options.drawing
   (:require
+   [app.main.data.workspace.drawing.common :as dwdc]
    [app.main.ui.workspace.sidebar.options.drawing.frame :as frame]
+   [app.main.ui.workspace.sidebar.options.drawing.stroke :as stroke]
    [rumext.v2 :as mf]))
 
 (mf/defc drawing-options*
   {::mf/wrap [#(mf/throttle % 60)]
    ::mf/private true}
   [{:keys [drawing-state] :as props}]
-  (case (:tool drawing-state)
-    :frame
-    [:> frame/options* {:drawing-state drawing-state}]
+  (let [tool (:tool drawing-state)]
+    (cond
+      (= tool :frame)
+      [:> frame/options* {:drawing-state drawing-state}]
 
-    nil))
+      ;; The pen, path, line and arrow tools all draw a stroked path,
+      ;; so they share the stroke the next shape will be created with
+      (contains? dwdc/stroke-tools tool)
+      [:> stroke/options* {:tool tool}]
+
+      :else nil)))
 
 
