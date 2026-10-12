@@ -13,6 +13,7 @@
    [app.common.geom.point :as gpt]
    [app.common.geom.rect :as grc]
    [app.common.geom.shapes :as gsh]
+   [app.common.geom.shapes.intersect :as gsi]
    [app.common.geom.shapes.text :as gst]
    [app.common.types.modifiers :as ctm]
    [app.common.uuid :as uuid]
@@ -148,6 +149,30 @@
         index (index-shape objects parents-index clip-index index shape)]
     (assoc data :index index)))
 
+(defn- visible-fill?
+  "A fill that paints something. Fully transparent fills (0% opacity, or a
+  gradient whose stops are all transparent) don't, so a shape that only has
+  those is treated like one without fills when hit-testing, as Figma does."
+  [fill]
+  (and (pos? (get fill :fill-opacity 1))
+       (if-let [stops (get-in fill [:fill-color-gradient :stops])]
+         (some #(pos? (get % :opacity 1)) stops)
+         true)))
+
+(defn- contains-rect?
+  "Whether `rect` lies fully inside `shape`, a rect or an ellipse."
+  [shape rect]
+  (let [corners (grc/rect->points rect)]
+    (if (cfh/circle-shape? shape)
+      (let [{:keys [x y width height]} shape
+            ellipse {:cx (+ x (/ width 2))
+                     :cy (+ y (/ height 2))
+                     :rx (/ width 2)
+                     :ry (/ height 2)
+                     :transform (:transform-inverse shape)}]
+        (every? #(gsi/is-point-inside-ellipse? % ellipse) corners))
+      (every? #(gsi/slow-has-point? shape %) corners))))
+
 (defn- query-index
   [{index :index} rect frame-id full-frame? include-frames? ignore-groups? clip-children? using-selrect?]
   (let [result (-> (qdt/search index (clj->js rect))
@@ -193,7 +218,10 @@
 
             (gsh/overlaps? outer-shape rect)))
 
-        overlaps-inner-shape?
+        ;; The query rect is a small box around the cursor. The cursor is on
+        ;; the stroke unless that box lies fully inside the area the stroke
+        ;; leaves unpainted.
+        inside-inner-shape?
         (fn [shape]
           (let [padding (->> (:strokes shape)
                              (map #(case (get % :stroke-alignment :center)
@@ -202,15 +230,18 @@
                                      :inner  (* 2 (:stroke-width % 0))))
                              (reduce d/max 0))
 
-                scalev     (gpt/point (/ (- (:width shape) padding)
-                                         (:width shape))
-                                      (/ (- (:height shape) padding)
-                                         (:height shape)))
+                inner-width  (- (:width shape) padding)
+                inner-height (- (:height shape) padding)]
 
-                inner-shape (-> shape
-                                (gsh/transform-shape (-> (ctm/empty)
-                                                         (ctm/resize scalev (gsh/shape->center shape)))))]
-            (gsh/overlaps? inner-shape rect)))
+            (and (pos? inner-width)
+                 (pos? inner-height)
+                 (let [scalev      (gpt/point (/ inner-width (:width shape))
+                                              (/ inner-height (:height shape)))
+
+                       inner-shape (-> shape
+                                       (gsh/transform-shape (-> (ctm/empty)
+                                                                (ctm/resize scalev (gsh/shape->center shape)))))]
+                   (contains-rect? inner-shape rect)))))
 
         overlaps-path?
         (fn [shape]
@@ -232,13 +263,13 @@
         overlaps?
         (fn [shape]
           (if (and (false? using-selrect?)
-                   (empty? (:fills shape))
+                   (not (some visible-fill? (:fills shape)))
                    (not (contains? (-> shape :svg-attrs) :fill))
                    (not (contains? (-> shape :svg-attrs :style) :fill)))
             (case  (:type shape)
-              ;; If the shape has no fills the overlap depends on the stroke
-              :rect (and (overlaps-outer-shape? shape) (not (overlaps-inner-shape? shape)))
-              :circle (and (overlaps-outer-shape? shape) (not (overlaps-inner-shape? shape)))
+              ;; If the shape has no visible fills the overlap depends on the stroke
+              :rect (and (overlaps-outer-shape? shape) (not (inside-inner-shape? shape)))
+              :circle (and (overlaps-outer-shape? shape) (not (inside-inner-shape? shape)))
               (:bool :path) (overlaps-path? shape)
               (gsh/overlaps? shape rect))
             (gsh/overlaps? shape rect)))
