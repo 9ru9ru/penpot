@@ -80,13 +80,20 @@
                             :who-inspect "team"}))
         options         (deref options*)
 
+        current-slink
+        (mf/with-memo [slinks options file]
+          (let [{:keys [pages who-comment who-inspect]} (prepare-params options)]
+            ;; `:share-links` may still hold the links of another file
+            ;; while the workspace dialog fetches this one's
+            (d/seek #(and (= (:file-id %) (:id file))
+                          (= (:who-inspect %) who-inspect)
+                          (= (:who-comment %) who-comment)
+                          (= (:pages %) pages))
+                    slinks)))
+
         current-link
-        (mf/with-memo [slinks options page-ids team]
-          (let [{:keys [pages who-comment who-inspect] :as params} (prepare-params options)
-                slink  (d/seek #(and (= (:who-inspect %) who-inspect)
-                                     (= (:who-comment %) who-comment)
-                                     (= (:pages %) pages))
-                               slinks)]
+        (mf/with-memo [current-slink page-ids team]
+          (let [slink current-slink]
             (cond
               (nil? slink)
               nil
@@ -177,12 +184,12 @@
         (fn [_]
           (reset! confirm* true))
 
+        ;; The link shown, not the first one: matching on the
+        ;; deprecated `:flags` (nil on every link) took the first
         delete-link
         (fn [_]
-          (let [params (prepare-params options)
-                slink  (d/seek #(= (:flags %) (:flags params)) slinks)]
-            (reset! confirm* false)
-            (st/emit! (dc/delete-share-link slink))))
+          (reset! confirm* false)
+          (st/emit! (dc/delete-share-link current-slink)))
 
         toggle-perms-visibility
         (fn [_]
