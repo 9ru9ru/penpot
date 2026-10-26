@@ -9,8 +9,9 @@
   (:require
    [app.main.data.common :as dcm]
    [app.main.data.event :as ev]
+   [app.main.data.helpers :as dsh]
+   [app.main.data.modal :as modal]
    [app.main.data.shortcuts :as scd]
-   [app.main.data.team :as dtm]
    [app.main.data.workspace :as dw]
    [app.main.data.workspace.drawing.common :as dwc]
    [app.main.data.workspace.history :as dwh]
@@ -25,6 +26,7 @@
    [app.main.ui.exports.assets :refer [progress-widget]]
    [app.main.ui.formats :as fmt]
    [app.main.ui.icons :as deprecated-icon]
+   [app.main.ui.viewer.share-link]
    [app.main.ui.workspace.presence :refer [active-sessions*]]
    [app.util.dom :as dom]
    [app.util.i18n :as i18n :refer [tr]]
@@ -144,10 +146,14 @@
                            (pos? (:count-unread-comments %))))
                (boolean)))
 
+        ;; Same as who can create a share link; the members invitation
+        ;; is in the share dialog and in the dashboard
         display-share-button?
-        (and (not (:is-default team))
-             (or (:is-admin permissions)
-                 (:is-owner permissions)))
+        (:can-edit permissions)
+
+        ;; Opened through a share link by someone outside the team
+        visitor?
+        (= :share-link (:type permissions))
 
         nav-to-viewer
         (mf/use-fn
@@ -189,10 +195,13 @@
 
         open-share-dialog
         (mf/use-fn
-         (mf/deps team)
+         (mf/deps file-id page-id)
          (fn []
-           (st/emit! (dtm/check-and-invite-members {:team-id (:id team)
-                                                    :origin :workspace}))))]
+           (let [state @st/state]
+             (modal/show! :share-link {:file (dsh/lookup-file state file-id)
+                                       :page (dsh/lookup-page state file-id page-id)
+                                       :target :workspace})
+             (modal/disallow-click-outside!))))]
 
     (mf/with-effect [editing?]
       (when ^boolean editing?
@@ -215,17 +224,18 @@
         :on-zoom-fit on-zoom-fit
         :on-zoom-selected on-zoom-selected}]]
 
-     [:div {:class (stl/css :comments-section)}
-      [:button {:title (tr "workspace.toolbar.comments" (get-tt :add-comment))
-                :aria-label (tr "workspace.toolbar.comments" (get-tt :add-comment))
-                :class (stl/css-case :comments-btn true
-                                     :selected (= selected-drawtool :comments))
-                :on-click toggle-comments
-                :data-tool "comments"
-                :style {:position "relative"}}
-       deprecated-icon/comments
-       (when ^boolean has-unread-comments?
-         [:div {:class (stl/css :unread)}])]]
+     (when-not ^boolean visitor?
+       [:div {:class (stl/css :comments-section)}
+        [:button {:title (tr "workspace.toolbar.comments" (get-tt :add-comment))
+                  :aria-label (tr "workspace.toolbar.comments" (get-tt :add-comment))
+                  :class (stl/css-case :comments-btn true
+                                       :selected (= selected-drawtool :comments))
+                  :on-click toggle-comments
+                  :data-tool "comments"
+                  :style {:position "relative"}}
+         deprecated-icon/comments
+         (when ^boolean has-unread-comments?
+           [:div {:class (stl/css :unread)}])]])
 
      (when-not ^boolean read-only?
        [:div {:class (stl/css :history-section)}

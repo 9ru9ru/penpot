@@ -16,6 +16,7 @@
    [app.main.data.event :as ev]
    [app.main.data.modal :as modal]
    [app.main.data.notifications :as ntf]
+   [app.main.data.team :as dtm]
    [app.main.refs :as refs]
    [app.main.router :as rt]
    [app.main.store :as st]
@@ -34,18 +35,30 @@
    :who-comment who-comment
    :who-inspect who-inspect})
 
+;; `target` is where the link opens: `:viewer` (the default) or
+;; `:workspace`, the canvas in read only mode for people outside the
+;; team. The workspace links share all the pages and the code by default.
 (mf/defc share-link-dialog
   {::mf/register modal/components
    ::mf/register-as :share-link
    ::mf/wrap-props false}
-  [{:keys [file page]}]
-  (let [current-page    page
+  [{:keys [file page target]}]
+  (let [workspace?      (= target :workspace)
+        current-page    page
         current-page-id (:id page)
         slinks          (mf/deref refs/share-links)
         router          (mf/deref refs/router)
         route           (mf/deref refs/route)
         zoom-type       (mf/deref refs/viewer-zoom-type)
+        team            (mf/deref refs/team)
         page-ids        (dm/get-in file [:data :pages])
+        permissions     (:permissions team)
+
+        can-invite?
+        (and workspace?
+             (not (:is-default team))
+             (or (:is-admin permissions)
+                 (:is-owner permissions)))
 
         perms-visible*  (mf/use-state false)
         perms-visible?  (deref perms-visible*)
@@ -54,21 +67,41 @@
         confirm?        (deref confirm*)
 
         options*        (mf/use-state
-                         {:pages-mode "current"
-                          :all-pages false
-                          :pages #{(:id page)}
-                          :who-comment "team"
-                          :who-inspect "team"})
+                         (if workspace?
+                           {:pages-mode "all"
+                            :all-pages true
+                            :pages (into #{} page-ids)
+                            :who-comment "team"
+                            :who-inspect "all"}
+                           {:pages-mode "current"
+                            :all-pages false
+                            :pages #{(:id page)}
+                            :who-comment "team"
+                            :who-inspect "team"}))
         options         (deref options*)
 
         current-link
-        (mf/with-memo [slinks options page-ids]
+        (mf/with-memo [slinks options page-ids team]
           (let [{:keys [pages who-comment who-inspect] :as params} (prepare-params options)
                 slink  (d/seek #(and (= (:who-inspect %) who-inspect)
                                      (= (:who-comment %) who-comment)
                                      (= (:pages %) pages))
                                slinks)]
-            (when slink
+            (cond
+              (nil? slink)
+              nil
+
+              workspace?
+              (let [page-id (if (contains? (:pages slink) current-page-id)
+                              current-page-id
+                              (d/seek #(contains? (:pages slink) %) page-ids))
+                    href    (rt/resolve router :workspace {:team-id (:id team)
+                                                           :file-id (:id file)
+                                                           :page-id page-id
+                                                           :share-id (:id slink)})]
+                (dm/str (assoc cf/public-uri :fragment href)))
+
+              :else
               (let [page-id (d/seek #(contains? (:pages slink) %) page-ids)
                     params  (-> (:query-params route)
                                 (assoc :share-id (:id slink))
@@ -126,7 +159,7 @@
                 params (assoc params :file-id (:id file))]
             (st/emit! (dc/create-share-link params)
                       (ev/event {::ev/name "create-share-link"
-                                 ::ev/origin "viewer"
+                                 ::ev/origin (if workspace? "workspace" "viewer")
                                  :can-comment (:who-comment params)
                                  :can-inspect-code (:who-inspect params)}))))
 
@@ -138,7 +171,7 @@
                                :content (tr "common.share-link.link-copied-success")
                                :timeout 1000})
                     (ev/event {::ev/name "copy-share-link"
-                               ::ev/origin "viewer"})))
+                               ::ev/origin (if workspace? "workspace" "viewer")})))
 
         try-delete-link
         (fn [_]
@@ -163,7 +196,18 @@
         on-comment-change
         (fn [value]
           (reset! confirm* false)
-          (swap! options* assoc :who-comment value))]
+          (swap! options* assoc :who-comment value))
+
+        invite-members
+        (fn [_]
+          (st/emit! (modal/hide)
+                    (dtm/check-and-invite-members {:team-id (:id team)
+                                                   :origin :workspace})))]
+
+    ;; The viewer gets the links with its bundle
+    (mf/with-effect [workspace? file]
+      (when workspace?
+        (st/emit! (dc/fetch-share-links (:id file)))))
 
     [:div {:class (stl/css :share-modal)}
      [:div  {:class (stl/css :share-link-dialog)}
@@ -191,7 +235,10 @@
 
         [:div {:class (stl/css :hint-wrapper)}
          (when (not ^boolean confirm?)
-           [:div {:class (stl/css :hint)} (tr "common.share-link.permissions-hint")])
+           [:div {:class (stl/css :hint)}
+            (if workspace?
+              (tr "common.share-link.workspace-hint")
+              (tr "common.share-link.permissions-hint"))])
          (cond
            (true? confirm?)
            [:div {:class (stl/css :confirm-dialog)}
@@ -294,16 +341,18 @@
                                   :on-change on-mark-checked-page
                                   :checked (contains? selected id)}]]])]])]])
 
-             [:div {:class (stl/css :access-mode)}
-              [:div {:class (stl/css :subtitle)}
-               (tr "common.share-link.permissions-can-comment")]
-              [:div {:class (stl/css :items)}
-               [:& select
-                {:class (stl/css :who-comment-select)
-                 :default-value (dm/str (:who-comment options))
-                 :options [{:value "team" :label (tr "common.share-link.team-members")}
-                           {:value "all" :label (tr "common.share-link.all-users")}]
-                 :on-change on-comment-change}]]]
+             ;; The workspace has no comments for people outside the team
+             (when-not workspace?
+               [:div {:class (stl/css :access-mode)}
+                [:div {:class (stl/css :subtitle)}
+                 (tr "common.share-link.permissions-can-comment")]
+                [:div {:class (stl/css :items)}
+                 [:& select
+                  {:class (stl/css :who-comment-select)
+                   :default-value (dm/str (:who-comment options))
+                   :options [{:value "team" :label (tr "common.share-link.team-members")}
+                             {:value "all" :label (tr "common.share-link.all-users")}]
+                   :on-change on-comment-change}]]])
              [:div {:class (stl/css :inspect-mode)}
               [:div {:class (stl/css :subtitle)}
                (tr "common.share-link.permissions-can-inspect")]
@@ -313,7 +362,16 @@
                  :default-value (dm/str (:who-inspect options))
                  :options [{:value "team" :label (tr "common.share-link.team-members")}
                            {:value "all" :label (tr "common.share-link.all-users")}]
-                 :on-change on-inspect-change}]]]])])]]]))
+                 :on-change on-inspect-change}]]]])])
+
+       (when (and ^boolean can-invite?
+                  (not ^boolean confirm?))
+         [:div {:class (stl/css :invite-section)}
+          [:div {:class (stl/css :hint)} (tr "common.share-link.invite-hint")]
+          [:input {:type "button"
+                   :class (stl/css :button-secondary)
+                   :on-click invite-members
+                   :value (tr "common.share-link.invite-members")}]])]]]))
 
 
 

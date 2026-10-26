@@ -8,6 +8,7 @@
   (:require
    [app.common.data :as d]
    [app.common.data.macros :as dm]
+   [app.common.features :as cfeat]
    [app.common.logging :as log]
    [app.common.schema :as sm]
    [app.common.types.organization :as cto]
@@ -323,6 +324,78 @@
               (dissoc :shared-files)
               (dissoc :fonts))
           state)))))
+
+;; --- EVENT: initialize-shared-team
+
+(defn- shared-team-fetched
+  [share-id {:keys [team project permissions] :as bundle}]
+  (ptk/reify ::shared-team-fetched
+    ptk/UpdateEvent
+    (update [_ state]
+      (-> state
+          (assoc-in [:teams (:id team)] (assoc team :permissions permissions))
+          (assoc-in [:projects (:id project)] project)
+          (assoc :permissions permissions)
+          ;; Read by `initialize-workspace` instead of fetching the
+          ;; file, its libraries and the team fonts (all of them need
+          ;; team membership)
+          (assoc :workspace-shared (-> (select-keys bundle [:file :libraries :fonts])
+                                       (assoc :share-id share-id)))))
+
+    ptk/WatchEvent
+    (watch [_ _ _]
+      (rx/of (features/initialize (:features team))))))
+
+(defn initialize-shared-team
+  "Variant of `initialize-team` for someone outside the team who opens a
+  file through a share link: the team, project and permissions come from
+  the file's view-only bundle instead of the profile's teams. A member
+  is sent to the regular workspace instead."
+  [team-id file-id share-id]
+  (ptk/reify ::initialize-shared-team
+    ptk/UpdateEvent
+    (update [_ state]
+      (-> state
+          (assoc :current-team-id team-id)
+          (assoc :workspace-share-id share-id)))
+
+    ptk/WatchEvent
+    (watch [_ state stream]
+      (let [stopper (rx/filter (ptk/type? ::finalize-shared-team) stream)
+            rparams (rt/get-params state)
+            ;; As in the viewer, the team features are not known until
+            ;; the bundle arrives, so report all the supported ones
+            params  {:file-id file-id
+                     :share-id share-id
+                     :features cfeat/supported-features}]
+        (->> (rp/cmd! :get-view-only-bundle params)
+             (rx/map (fn [{:keys [team permissions] :as bundle}]
+                       (cond
+                         (:in-team permissions)
+                         (rt/nav :workspace (dissoc rparams :share-id) ::rt/replace true)
+
+                         (not= team-id (:id team))
+                         (rt/nav :workspace (assoc rparams :team-id (:id team)) ::rt/replace true)
+
+                         :else
+                         (shared-team-fetched share-id bundle))))
+             (rx/take-until stopper))))))
+
+(defn finalize-shared-team
+  [team-id]
+  (ptk/reify ::finalize-shared-team
+    ptk/UpdateEvent
+    (update [_ state]
+      (let [shared? (contains? state :workspace-shared)]
+        (cond-> (dissoc state :workspace-share-id :workspace-shared)
+          (= team-id (:current-team-id state))
+          (dissoc :current-team-id :fonts)
+
+          ;; Only the team that `shared-team-fetched` added; a member
+          ;; was redirected before getting here
+          shared?
+          (-> (dissoc :permissions)
+              (update :teams dissoc team-id)))))))
 
 ;; --- ROLES
 

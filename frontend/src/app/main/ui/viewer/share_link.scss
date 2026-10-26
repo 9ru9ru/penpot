@@ -229,3 +229,16 @@
     }
   }
 }
+
+.invite-section {
+  @include deprecated.flex-row;
+
+  align-items: center;
+  gap: deprecated.$s-8;
+  padding-top: deprecated.$s-16;
+  border-top: deprecated.$s-1 solid var(--modal-separator-background-color);
+}
+
+.button-secondary {
+  @extend %modal-cancel-btn;
+}

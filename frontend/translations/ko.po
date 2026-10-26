@@ -249,6 +249,18 @@ msgstr "코드 검사 가능"
 msgid "common.share-link.permissions-hint"
 msgstr "링크가 있는 누구나 접근 가능합니다"
 
+#: src/app/main/ui/viewer/share_link.cljs
+msgid "common.share-link.invite-hint"
+msgstr "편집까지 하게 하려면 팀원으로 초대하세요"
+
+#: src/app/main/ui/viewer/share_link.cljs
+msgid "common.share-link.invite-members"
+msgstr "팀원 초대"
+
+#: src/app/main/ui/viewer/share_link.cljs
+msgid "common.share-link.workspace-hint"
+msgstr "링크가 있는 누구나 이 파일을 캔버스에서 볼 수 있습니다 (편집 불가)"
+
 #: src/app/main/ui/viewer/share_link.cljs:242
 msgid "common.share-link.permissions-pages"
 msgstr "공유된 페이지"

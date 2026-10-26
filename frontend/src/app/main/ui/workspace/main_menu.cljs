@@ -886,6 +886,11 @@
   [{:keys [layout file]}]
   (let [profile            (mf/deref refs/profile)
 
+        ;; Opened through a share link by someone outside the team: the
+        ;; file, preferences, plugins and MCP menus need membership or a
+        ;; profile, only edit (find), view and help remain
+        visitor?           (= :share-link (:type (mf/use-ctx ctx/permissions)))
+
         show-menu*         (mf/use-state false)
         show-menu?         (deref show-menu*)
         selected-sub-menu* (mf/use-state nil)
@@ -1013,18 +1018,19 @@
                          :id "workspace:menu"
                          :on-close close-menu
                          :class (stl/css :base-menu :menu)}
-      [:> dropdown-menu-item* {:class (stl/css :base-menu-item :menu-item)
-                               :on-click    on-menu-click
-                               :on-key-down (fn [event]
-                                              (when (kbd/enter? event)
-                                                (on-menu-click event)))
-                               :on-pointer-enter on-menu-click
-                               :data-testid   "file"
-                               :id          "file-menu-file"}
-       [:span {:class (stl/css :item-name)}
-        (tr "workspace.header.menu.option.file")]
-       [:> icon* {:icon-id i/arrow-right
-                  :class (stl/css :item-arrow)}]]
+      (when-not ^boolean visitor?
+        [:> dropdown-menu-item* {:class (stl/css :base-menu-item :menu-item)
+                                 :on-click    on-menu-click
+                                 :on-key-down (fn [event]
+                                                (when (kbd/enter? event)
+                                                  (on-menu-click event)))
+                                 :on-pointer-enter on-menu-click
+                                 :data-testid   "file"
+                                 :id          "file-menu-file"}
+         [:span {:class (stl/css :item-name)}
+          (tr "workspace.header.menu.option.file")]
+         [:> icon* {:icon-id i/arrow-right
+                    :class (stl/css :item-arrow)}]])
 
       [:> dropdown-menu-item* {:class (stl/css :base-menu-item :menu-item)
                                :on-click    on-menu-click
@@ -1052,20 +1058,22 @@
        [:> icon* {:icon-id i/arrow-right
                   :class (stl/css :item-arrow)}]]
 
-      [:> dropdown-menu-item* {:class (stl/css :base-menu-item :menu-item)
-                               :on-click    on-menu-click
-                               :on-key-down (fn [event]
-                                              (when (kbd/enter? event)
-                                                (on-menu-click event)))
-                               :on-pointer-enter on-menu-click
-                               :data-testid "preferences"
-                               :id          "file-menu-preferences"}
-       [:span {:class (stl/css :item-name)}
-        (tr "workspace.header.menu.option.preferences")]
-       [:> icon* {:icon-id i/arrow-right
-                  :class (stl/css :item-arrow)}]]
+      (when-not ^boolean visitor?
+        [:> dropdown-menu-item* {:class (stl/css :base-menu-item :menu-item)
+                                 :on-click    on-menu-click
+                                 :on-key-down (fn [event]
+                                                (when (kbd/enter? event)
+                                                  (on-menu-click event)))
+                                 :on-pointer-enter on-menu-click
+                                 :data-testid "preferences"
+                                 :id          "file-menu-preferences"}
+         [:span {:class (stl/css :item-name)}
+          (tr "workspace.header.menu.option.preferences")]
+         [:> icon* {:icon-id i/arrow-right
+                    :class (stl/css :item-arrow)}]])
 
-      (when (features/active-feature? @st/state "plugins/runtime")
+      (when (and (not visitor?)
+                 (features/active-feature? @st/state "plugins/runtime"))
         [:> dropdown-menu-item* {:class (stl/css :base-menu-item :menu-item)
                                  :on-click    on-menu-click
                                  :on-key-down (fn [event]
@@ -1079,7 +1087,8 @@
          [:> icon* {:icon-id i/arrow-right
                     :class (stl/css :item-arrow)}]])
 
-      (when (contains? cf/flags :mcp)
+      (when (and (not visitor?)
+                 (contains? cf/flags :mcp))
         (let [enabled?         (get mcp :enabled)
               conn-status      (get mcp :connection-status)
               has-valid-token? (get mcp :token-valid)

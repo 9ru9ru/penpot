@@ -142,15 +142,16 @@
        (rx/reduce conj {})))
 
 (defn- resolve-file
-  [file]
-  (log/inf :hint "resolve file"
-           :file-id (str (:id file))
-           :features (str/join " " (:features file)))
-  (->> (fpmap/resolve-file file)
-       (rx/map :data)
-       (rx/map
-        (fn [data]
-          (assoc file :data (d/removem (comp t/pointer? val) data))))))
+  ([file] (resolve-file file nil))
+  ([file share-id]
+   (log/inf :hint "resolve file"
+            :file-id (str (:id file))
+            :features (str/join " " (:features file)))
+   (->> (fpmap/resolve-file file share-id)
+        (rx/map :data)
+        (rx/map
+         (fn [data]
+           (assoc file :data (d/removem (comp t/pointer? val) data)))))))
 
 (defn- check-libraries-synchronization
   [file-id libraries]
@@ -212,6 +213,25 @@
               (rx/of (ptk/data-event ::all-libraries-resolved {:file-id file-id})))
              (rx/take-until stopper-s))))))
 
+(defn- fetch-shared-libraries
+  "`fetch-libraries` for a workspace opened through a share link: the
+  libraries come resolved with the view-only bundle. There is no sync
+  check, the visitor can not update them."
+  [file-id]
+  (ptk/reify ::fetch-shared-libraries
+    ptk/WatchEvent
+    (watch [_ state _]
+      (let [libraries (dm/get-in state [:workspace-shared :libraries])]
+        (rx/concat
+         (rx/of (dwl/libraries-fetched file-id libraries))
+         (->> (rx/from libraries)
+              (rx/map (fn [library]
+                        (-> library
+                            (assoc :library-of file-id)
+                            (update :data #(d/removem (comp t/pointer? val) %))
+                            (library-resolved)))))
+         (rx/of (ptk/data-event ::all-libraries-resolved {:file-id file-id})))))))
+
 
 (defn update-page-position-data
   ([]
@@ -258,11 +278,14 @@
           (assoc :workspace-ready file-id)))
 
     ptk/WatchEvent
-    (watch [_ _ _]
+    (watch [_ state _]
       (rx/merge
-       (rx/of (dp/check-open-plugin)
-              (fdf/fix-deleted-fonts-for-local-library file-id))
-       (if (contains? cf/flags :mcp)
+       (if (contains? state :workspace-shared)
+         (rx/of (fdf/fix-deleted-fonts-for-local-library file-id))
+         (rx/of (dp/check-open-plugin)
+                (fdf/fix-deleted-fonts-for-local-library file-id)))
+       (if (and (contains? cf/flags :mcp)
+                (not (contains? state :workspace-shared)))
          ;; We wait the plugin runtime to be ready before launch the
          ;; mcp initialization
          (->> (rx/from (preg/wait-for-runtime))
@@ -369,6 +392,24 @@
                dwz/zoom-to-selected-shape)))))
 
 ;; FIXME: rename to `fetch-file`
+(defn- fetch-shared-bundle
+  "`fetch-bundle` for a workspace opened through a share link: the file
+  comes with the view-only bundle (only the pages the link shares), and
+  its fragments are fetched with the share link."
+  [file-id features]
+  (ptk/reify ::fetch-shared-bundle
+    ptk/WatchEvent
+    (watch [_ state stream]
+      (let [stopper-s (rx/filter (ptk/type? ::finalize-workspace) stream)
+            {:keys [file share-id]} (get state :workspace-shared)]
+        (->> (resolve-file file share-id)
+             (rx/map (fn [file]
+                       (bundle-fetched {:file file
+                                        :file-id file-id
+                                        :features features
+                                        :thumbnails {}})))
+             (rx/take-until stopper-s))))))
+
 (defn- fetch-bundle
   "Multi-stage file bundle fetch coordinator"
   [file-id features]
@@ -405,7 +446,9 @@
         (log/dbg :hint "initialize-file"
                  :team-id (dm/str team-id)
                  :file-id (dm/str file-id))
-        (rx/of (fetch-bundle file-id features))))))
+        (if (contains? state :workspace-shared)
+          (rx/of (fetch-shared-bundle file-id features))
+          (rx/of (fetch-bundle file-id features)))))))
 
 (defn initialize-workspace
   [team-id file-id]
@@ -428,6 +471,11 @@
             rparams      (rt/get-params state)
             features     (features/get-enabled-features state team-id)
             render-wasm-enabled? (features/active-feature? state "render-wasm/v1")
+            ;; Opened through a share link by someone outside the team:
+            ;; read only, and everything that needs team membership
+            ;; (comments, notifications, project, libraries) is skipped
+            ;; or comes from the view-only bundle
+            shared?      (contains? state :workspace-shared)
             render-wasm-ready?   #(and render-wasm-enabled?
                                        (wasm-state/ready?))]
 
@@ -454,10 +502,13 @@
                       (rx/take 1)
                       (rx/ignore))
 
-                 (rx/of (ntf/hide)
-                        (dcmt/retrieve-comment-threads file-id)
-                        (dcmt/fetch-profiles)
-                        (df/fetch-fonts team-id)))
+                 (if shared?
+                   (rx/of (ntf/hide)
+                          (df/fonts-fetched (dm/get-in state [:workspace-shared :fonts])))
+                   (rx/of (ntf/hide)
+                          (dcmt/retrieve-comment-threads file-id)
+                          (dcmt/fetch-profiles)
+                          (df/fetch-fonts team-id))))
 
                 ;; Once the essential data is fetched, lets proceed to
                 ;; fetch the file bundle
@@ -473,14 +524,22 @@
                                   :team-id (dm/str team-id)
                                   :file-id (dm/str file-id))
 
-                       (rx/of (dpj/initialize-project (:project-id file))
-                              (dwn/initialize team-id file-id)
-                              (dwsl/initialize-shape-layout)
-                              (dwtxt/initialize-text-reflow)
-                              (fetch-libraries file-id features)
-                              (-> (workspace-initialized file-id)
-                                  (with-meta {:team-id team-id
-                                              :file-id file-id}))))))
+                       (if shared?
+                         (rx/of #(assoc % :current-project-id (:project-id file))
+                                (dwsl/initialize-shape-layout)
+                                (dwtxt/initialize-text-reflow)
+                                (fetch-shared-libraries file-id)
+                                (-> (workspace-initialized file-id)
+                                    (with-meta {:team-id team-id
+                                                :file-id file-id})))
+                         (rx/of (dpj/initialize-project (:project-id file))
+                                (dwn/initialize team-id file-id)
+                                (dwsl/initialize-shape-layout)
+                                (dwtxt/initialize-text-reflow)
+                                (fetch-libraries file-id features)
+                                (-> (workspace-initialized file-id)
+                                    (with-meta {:team-id team-id
+                                                :file-id file-id})))))))
 
                ;; Install dev perf observers once the workspace is ready
                (when (contains? cf/flags :perf-logs)

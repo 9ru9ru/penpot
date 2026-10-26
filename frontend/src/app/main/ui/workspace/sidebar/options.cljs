@@ -287,14 +287,18 @@
           :debug
           [:> debug-shape-info*])]
 
-       [:div {:class (stl/css :element-options :inspect-options :read-only)}
-        [:> inspect-tab* {:page-id page-id
-                          :file-id file-id
-                          :objects objects
-                          :selected selected
-                          :shapes shapes
-                          :on-change-section on-change-section
-                          :on-expand on-expand}]])]))
+       ;; People outside the team that open the file through a share
+       ;; link only see the code when the link allows it
+       (when (or (not= :share-link (:type permissions))
+                 (= "all" (:who-inspect permissions)))
+         [:div {:class (stl/css :element-options :inspect-options :read-only)}
+          [:> inspect-tab* {:page-id page-id
+                            :file-id file-id
+                            :objects objects
+                            :selected selected
+                            :shapes shapes
+                            :on-change-section on-change-section
+                            :on-expand on-expand}]]))]))
 
 (defn- make-page-objects-ref
   [file-id page-id]
