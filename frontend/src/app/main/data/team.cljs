@@ -359,6 +359,12 @@
           (assoc :current-team-id team-id)
           (assoc :workspace-share-id share-id)))
 
+    ;; Since 2.18 the asset endpoints check file read permissions, so the
+    ;; image URLs need the share link too, as the viewer does
+    ptk/EffectEvent
+    (effect [_ _ _]
+      (cf/set-current-share-id! share-id))
+
     ptk/WatchEvent
     (watch [_ state stream]
       (let [stopper (rx/filter (ptk/type? ::finalize-shared-team) stream)
@@ -384,6 +390,10 @@
 (defn finalize-shared-team
   [team-id]
   (ptk/reify ::finalize-shared-team
+    ptk/EffectEvent
+    (effect [_ _ _]
+      (cf/set-current-share-id! nil))
+
     ptk/UpdateEvent
     (update [_ state]
       (let [shared? (contains? state :workspace-shared)]

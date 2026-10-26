@@ -284,6 +284,10 @@ msgstr "Invite members"
 msgid "common.share-link.workspace-hint"
 msgstr "Anyone with the link can view this file on the canvas, without editing"
 
+#: src/app/main/ui/viewer/share_link.cljs
+msgid "common.share-link.workspace-title"
+msgstr "Share link"
+
 #: src/app/main/ui/viewer/share_link.cljs:242
 msgid "common.share-link.permissions-pages"
 msgstr "Pages shared"

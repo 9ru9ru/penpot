@@ -220,7 +220,9 @@
      [:div  {:class (stl/css :share-link-dialog)}
       [:div {:class (stl/css :share-link-header)}
        [:h2 {:class (stl/css :share-link-title)}
-        (tr "common.share-link.title")]
+        (if workspace?
+          (tr "common.share-link.workspace-title")
+          (tr "common.share-link.title"))]
        [:button {:class (stl/css :modal-close-button)
                  :on-click on-close
                  :title (tr "labels.close")}
