@@ -335,8 +335,11 @@
 
         disable-events?          (contains? layout :comments)
         comments-mode?           (= drawing-tool :comments)
-        show-comments?           (or comments-mode?
-                                     (contains? layout :display-comments))
+        ;; No comments for people outside the team that open the
+        ;; file through a share link
+        show-comments?           (and (not= :share-link (:type permissions))
+                                      (or comments-mode?
+                                          (contains? layout :display-comments)))
         show-cursor-tooltip?     tooltip
         show-draw-area?          drawing-obj
         show-gradient-handlers?  (= (count selected) 1)

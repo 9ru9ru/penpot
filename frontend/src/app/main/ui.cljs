@@ -289,12 +289,7 @@
              file-id    (some-> params :file-id uuid/parse*)
              page-id    (some-> params :page-id uuid/parse*)
              share-id   (some-> params :share-id uuid/parse*)
-             layout     (some-> params :layout keyword)
-             workspace  [:> workspace-page* {:team-id team-id
-                                             :file-id file-id
-                                             :page-id page-id
-                                             :layout-name layout
-                                             :key file-id}]]
+             layout     (some-> params :layout keyword)]
          [:? {}
           (when (and (cf/external-feature-flag "onboarding-03" "test")
                      (nil? share-id))
@@ -308,13 +303,23 @@
               show-release-modal?
               [:& release-notes-modal {:version (:main cf/version)}]))
 
+          ;; The workspace hiccup is repeated: bound in a `let` it
+          ;; would not be compiled by the html macro
           (if (uuid? share-id)
             [:> shared-team-container* {:team-id team-id
                                         :file-id file-id
                                         :share-id share-id}
-             workspace]
+             [:> workspace-page* {:team-id team-id
+                                  :file-id file-id
+                                  :page-id page-id
+                                  :layout-name layout
+                                  :key file-id}]]
             [:> team-container* {:team-id team-id}
-             workspace])])
+             [:> workspace-page* {:team-id team-id
+                                  :file-id file-id
+                                  :page-id page-id
+                                  :layout-name layout
+                                  :key file-id}]])])
 
        :viewer
        (let [params   (get params :query)
