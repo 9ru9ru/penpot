@@ -333,7 +333,10 @@
    :add-comment          {:tooltip "C"
                           :command "c"
                           :subsections [:tools]
-                          :fn #(st/emit! (dwd/select-for-drawing :comments))}
+                          ;; Not for people outside the team visiting
+                          ;; through a share link (no comments for them)
+                          :fn #(when-not (= :share-link (:type (deref refs/permissions)))
+                                 (st/emit! (dwd/select-for-drawing :comments)))}
 
    :toggle-comments-visibility
    {:tooltip (ds/meta-shift "C")

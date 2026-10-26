@@ -15,6 +15,30 @@
    [app.rpc.doc :as-alias doc]
    [app.util.services :as sv]))
 
+;; --- QUERY: Get Share Links
+
+(def ^:private schema:get-share-links
+  [:map {:title "get-share-links"}
+   [:file-id ::sm/uuid]])
+
+(sv/defmethod ::get-share-links
+  "Returns the share links of a file.
+
+  The workspace share dialog needs them to show the existing link instead
+  of creating a new one. Only the members that can create or delete links
+  (edition permissions) can list them."
+  {::doc/added "2.17"
+   ::doc/module :files
+   ::sm/params schema:get-share-links}
+  [{:keys [::db/pool]} {:keys [::rpc/profile-id file-id]}]
+  (files/check-edition-permissions! pool profile-id file-id)
+  (->> (db/query pool :share-link {:file-id file-id})
+       (mapv (fn [row]
+               (-> row
+                   (update :pages db/decode-pgarray #{})
+                   ;; NOTE: flags are deprecated; see the view-only bundle
+                   (dissoc :flags))))))
+
 ;; --- MUTATION: Create Share Link
 
 (declare create-share-link)

@@ -30,6 +30,17 @@
 ;; SHARE LINK
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(defn fetch-share-links
+  "Load the share links of a file into `:share-links`; the viewer gets
+  them with its bundle, the workspace share dialog asks for them."
+  [file-id]
+  (ptk/reify ::fetch-share-links
+    ptk/WatchEvent
+    (watch [_ _ _]
+      (->> (rp/cmd! :get-share-links {:file-id file-id})
+           (rx/map (fn [links]
+                     #(assoc % :share-links links)))))))
+
 (defn share-link-created
   [link]
   (ptk/reify ::share-link-created
@@ -476,7 +487,10 @@
                      :page-id page-id
                      :section section
                      :frame-id frame-id
-                     :index index}
+                     :index index
+                     ;; Visitors of a shared workspace reach the
+                     ;; viewer through the same link
+                     :share-id (:workspace-share-id state)}
             params  (d/without-nils params)
             name    (dm/str "viewer-" file-id)
             options (merge {::rt/new-window true

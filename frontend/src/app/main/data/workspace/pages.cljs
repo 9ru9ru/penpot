@@ -117,7 +117,9 @@
 
          (let [profile (:profile state)
                props   (get profile :props)]
-           (when (not (:workspace-visited props))
+           ;; Not for the read only visitors of a shared workspace
+           (when (and (not (:workspace-visited props))
+                      (not (contains? state :workspace-shared)))
              (rx/of (select-frame-tool file-id page-id)))))
 
         ;; NOTE: this redirect is necessary for cases where user

@@ -272,6 +272,18 @@ msgstr "Can inspect code"
 msgid "common.share-link.permissions-hint"
 msgstr "Anyone with link will have access"
 
+#: src/app/main/ui/viewer/share_link.cljs
+msgid "common.share-link.invite-hint"
+msgstr "To let them edit, invite them to the team"
+
+#: src/app/main/ui/viewer/share_link.cljs
+msgid "common.share-link.invite-members"
+msgstr "Invite members"
+
+#: src/app/main/ui/viewer/share_link.cljs
+msgid "common.share-link.workspace-hint"
+msgstr "Anyone with the link can view this file on the canvas, without editing"
+
 #: src/app/main/ui/viewer/share_link.cljs:242
 msgid "common.share-link.permissions-pages"
 msgstr "Pages shared"

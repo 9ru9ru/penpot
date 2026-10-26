@@ -12,22 +12,27 @@
    [beicon.v2.core :as rx]))
 
 (defn resolve-file
-  [{:keys [id data] :as file}]
-  (letfn [(resolve-pointer [[key val :as kv]]
-            (if (t/pointer? val)
-              (->> (rp/cmd! :get-file-fragment {:file-id id :fragment-id @val})
-                   (rx/map #(get % :data))
-                   (rx/map #(vector key %)))
-              (rx/of kv)))
+  "Fetch the fragments the file data points to. Pass `share-id` when
+  the file is opened through a share link by someone outside the team."
+  ([file] (resolve-file file nil))
+  ([{:keys [id data] :as file} share-id]
+   (letfn [(resolve-pointer [[key val :as kv]]
+             (if (t/pointer? val)
+               (->> (rp/cmd! :get-file-fragment (cond-> {:file-id id :fragment-id @val}
+                                                  (uuid? share-id)
+                                                  (assoc :share-id share-id)))
+                    (rx/map #(get % :data))
+                    (rx/map #(vector key %)))
+               (rx/of kv)))
 
-          (resolve-pointers [coll]
-            (->> (rx/from (seq coll))
-                 (rx/merge-map resolve-pointer)
-                 (rx/reduce conj {})))]
+           (resolve-pointers [coll]
+             (->> (rx/from (seq coll))
+                  (rx/merge-map resolve-pointer)
+                  (rx/reduce conj {})))]
 
-    (->> (rx/zip (resolve-pointers data)
-                 (resolve-pointers (:pages-index data)))
-         (rx/take 1)
-         (rx/map (fn [[data pages-index]]
-                   (let [data (assoc data :pages-index pages-index)]
-                     (assoc file :data data)))))))
+     (->> (rx/zip (resolve-pointers data)
+                  (resolve-pointers (:pages-index data)))
+          (rx/take 1)
+          (rx/map (fn [[data pages-index]]
+                    (let [data (assoc data :pages-index pages-index)]
+                      (assoc file :data data))))))))

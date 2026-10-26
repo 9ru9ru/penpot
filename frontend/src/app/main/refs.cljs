@@ -42,6 +42,11 @@
                  (get teams team-id)))
              st/state))
 
+(def workspace-shared-id
+  "The share link id once the bundle of a workspace opened through a
+  share link (by someone outside the team) is loaded."
+  (l/derived (l/in [:workspace-shared :share-id]) st/state))
+
 (def project
   (l/derived (fn [state]
                (let [project-id (:current-project-id state)

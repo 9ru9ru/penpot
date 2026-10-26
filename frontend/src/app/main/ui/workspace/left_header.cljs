@@ -15,6 +15,7 @@
    [app.main.refs :as refs]
    [app.main.router :as rt]
    [app.main.store :as st]
+   [app.main.ui.context :as ctx]
    [app.main.ui.icons :as deprecated-icon]
    [app.main.ui.workspace.main-menu :as main-menu]
    [app.util.dom :as dom]
@@ -31,6 +32,11 @@
         file-name   (:name file)
         project-id  (:id project)
         shared?     (:is-shared file)
+
+        ;; Opened through a share link by someone outside the team, who
+        ;; has no dashboard to go back to and can not rename the file
+        visitor?    (= :share-link (:type (mf/use-ctx ctx/permissions)))
+
         persistence
         (mf/deref refs/persistence)
 
@@ -59,9 +65,11 @@
 
         start-editing-name
         (mf/use-fn
+         (mf/deps visitor?)
          (fn [event]
            (dom/prevent-default event)
-           (reset! editing* true)))
+           (when-not visitor?
+             (reset! editing* true))))
 
         close-modals
         (mf/use-fn
@@ -70,18 +78,21 @@
 
         go-back
         (mf/use-fn
+         (mf/deps visitor?)
          (fn []
-           (close-modals)
-           ;; FIXME: move set-mode to uri?
-           (st/emit! :interrupt
-                     (dw/set-options-mode :design)
-                     (dcm/go-to-dashboard-recent))))
+           (when-not visitor?
+             (close-modals)
+             ;; FIXME: move set-mode to uri?
+             (st/emit! :interrupt
+                       (dw/set-options-mode :design)
+                       (dcm/go-to-dashboard-recent)))))
 
         nav-to-project
         (mf/use-fn
-         (mf/deps project-id)
-         #(st/emit! :interrupt
-                    (dcm/go-to-dashboard-files ::rt/new-window true :project-id project-id)))]
+         (mf/deps project-id visitor?)
+         #(when-not visitor?
+            (st/emit! :interrupt
+                      (dcm/go-to-dashboard-files ::rt/new-window true :project-id project-id))))]
 
     (mf/with-effect [editing?]
       (when ^boolean editing?

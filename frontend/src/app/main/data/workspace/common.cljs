@@ -37,7 +37,9 @@
     (watch [_ state _]
       (let [profile (:profile state)
             props   (get profile :props)]
-        (when (not (:workspace-visited props))
+        ;; An anonymous visitor of a shared workspace has no props to save
+        (when (and (du/is-authenticated? profile)
+                   (not (:workspace-visited props)))
           (rx/of (du/update-profile-props {:workspace-visited true})))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

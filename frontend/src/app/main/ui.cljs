@@ -149,6 +149,27 @@
            ;; all dom tree instead of simple rerender.
            [:* {:key (str team-id)} children]]]]))))
 
+(mf/defc shared-team-container*
+  "Like `team-container*`, for a workspace opened through a share link
+  by someone outside the team."
+  {::mf/props :obj
+   ::mf/private true}
+  [{:keys [team-id file-id share-id children]}]
+  (mf/with-effect [team-id file-id share-id]
+    (when (and (uuid? team-id) (uuid? file-id))
+      (st/emit! (dtm/initialize-shared-team team-id file-id share-id))
+      (fn []
+        (st/emit! (dtm/finalize-shared-team team-id)))))
+
+  (let [{:keys [permissions] :as team} (mf/deref refs/team)
+        shared-id (mf/deref refs/workspace-shared-id)]
+    (when (and (= team-id (:id team))
+               (= share-id shared-id))
+      [:> (mf/provider ctx/current-team-id) {:value team-id}
+       [:> (mf/provider ctx/permissions) {:value permissions}
+        [:> (mf/provider ctx/can-edit?) {:value false}
+         [:* {:key (str team-id)} children]]]])))
+
 (mf/defc page*
   {::mf/props :obj
    ::mf/private true}
@@ -267,9 +288,16 @@
              team-id    (some-> params :team-id uuid/parse*)
              file-id    (some-> params :file-id uuid/parse*)
              page-id    (some-> params :page-id uuid/parse*)
-             layout     (some-> params :layout keyword)]
+             share-id   (some-> params :share-id uuid/parse*)
+             layout     (some-> params :layout keyword)
+             workspace  [:> workspace-page* {:team-id team-id
+                                             :file-id file-id
+                                             :page-id page-id
+                                             :layout-name layout
+                                             :key file-id}]]
          [:? {}
-          (when (cf/external-feature-flag "onboarding-03" "test")
+          (when (and (cf/external-feature-flag "onboarding-03" "test")
+                     (nil? share-id))
             (cond
               show-question-modal?
               [:& questions-modal]
@@ -280,12 +308,13 @@
               show-release-modal?
               [:& release-notes-modal {:version (:main cf/version)}]))
 
-          [:> team-container* {:team-id team-id}
-           [:> workspace-page* {:team-id team-id
-                                :file-id file-id
-                                :page-id page-id
-                                :layout-name layout
-                                :key file-id}]]])
+          (if (uuid? share-id)
+            [:> shared-team-container* {:team-id team-id
+                                        :file-id file-id
+                                        :share-id share-id}
+             workspace]
+            [:> team-container* {:team-id team-id}
+             workspace])])
 
        :viewer
        (let [params   (get params :query)
