@@ -97,7 +97,9 @@
                             :shape obj}]
              (case (d/name (:type gradient))
                "linear" [:> grad/linear-gradient props]
-               "radial" [:> grad/radial-gradient props]))))
+               "radial" [:> grad/radial-gradient props]
+               "angular" [:> grad/angular-gradient props]
+               nil))))
 
 
        (let [fill-id (dm/str "fill-" obj-index "-" render-id)]

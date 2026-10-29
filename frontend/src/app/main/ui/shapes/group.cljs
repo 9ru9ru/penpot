@@ -56,7 +56,8 @@
          [:> wrapper clip-props
           [:> wrapper mask-props
            (when ^boolean masked-group?
-             [:& render-mask {:mask mask}])
+             [:& render-mask {:mask mask
+                              :luminance (= :luminance (:mask-type shape))}])
 
            (for [item childs]
              [:& shape-wrapper

@@ -126,6 +126,12 @@
            (st/emit! (udw/trigger-bounding-box-cloaking ids))
            (st/emit! (dc/change-stroke-attrs ids {:stroke-style value} index))))
 
+        on-stroke-join-change
+        (mf/use-fn
+         (mf/deps ids)
+         (fn [index value]
+           (st/emit! (dc/change-stroke-attrs ids {:stroke-join value} index))))
+
         on-stroke-alignment-change
         (fn [index value]
           (when-not (str/empty? value)
@@ -294,6 +300,7 @@
                               :on-stroke-gap-change on-stroke-gap-change
                               :on-stroke-style-change on-stroke-style-change
                               :on-stroke-alignment-change on-stroke-alignment-change
+                              :on-stroke-join-change on-stroke-join-change
                               :on-stroke-cap-start-change on-stroke-cap-start-change
                               :on-stroke-cap-end-change on-stroke-cap-end-change
                               :on-stroke-cap-switch on-stroke-cap-switch

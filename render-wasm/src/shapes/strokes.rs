@@ -48,6 +48,9 @@ pub struct Stroke {
     // Per-side widths [top, right, bottom, left] for rects and frames.
     // `None` means the uniform `width` applies to all sides.
     pub widths: Option<[f32; 4]>,
+    // How corners are joined. `None` keeps Skia's default (miter), which is
+    // what designs made before the option existed were drawn with.
+    pub join: Option<skia::paint::Join>,
 }
 
 impl Stroke {
@@ -115,6 +118,7 @@ impl Stroke {
             dash,
             gap,
             widths: None,
+            join: None,
         }
     }
 
@@ -136,6 +140,7 @@ impl Stroke {
             dash,
             gap,
             widths: None,
+            join: None,
         }
     }
 
@@ -157,6 +162,7 @@ impl Stroke {
             dash,
             gap,
             widths: None,
+            join: None,
         }
     }
 
@@ -288,6 +294,10 @@ impl Stroke {
                 }
                 StrokeLineJoin::Miter => {} // Skia default
             }
+        }
+
+        if let Some(join) = self.join {
+            paint.set_stroke_join(join);
         }
 
         if self.style != StrokeStyle::Solid {

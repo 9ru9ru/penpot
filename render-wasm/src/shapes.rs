@@ -408,6 +408,23 @@ impl Shape {
         }
     }
 
+    pub fn set_mask_luminance(&mut self, luminance: bool) {
+        if let Type::Group(data) = &mut self.shape_type {
+            data.luminance = luminance;
+        }
+    }
+
+    /// True for a masked group whose mask works by brightness.
+    pub fn is_luminance_mask(&self) -> bool {
+        matches!(
+            self.shape_type,
+            Type::Group(Group {
+                masked: true,
+                luminance: true
+            })
+        )
+    }
+
     pub fn set_clip(&mut self, value: bool) {
         self.clip_content = value;
     }
@@ -693,6 +710,13 @@ impl Shape {
         self.strokes.push(s)
     }
 
+    pub fn set_last_stroke_join(&mut self, join: skia::paint::Join) -> Result<(), String> {
+        let stroke = self.strokes.last_mut().ok_or("Shape has no strokes")?;
+        stroke.join = Some(join);
+        self.invalidate_extrect();
+        Ok(())
+    }
+
     pub fn set_last_stroke_widths(&mut self, widths: [f32; 4]) -> Result<(), String> {
         let stroke = self.strokes.last_mut().ok_or("Shape has no strokes")?;
         stroke.widths = Some(widths);
@@ -969,7 +993,7 @@ impl Shape {
         let mut rect = bounds.to_rect();
 
         match self.shape_type {
-            Type::Group(Group { masked: true }) => {
+            Type::Group(Group { masked: true, .. }) => {
                 let mut mask_rect: Option<math::Rect> = None;
                 let mut content_rect: Option<math::Rect> = None;
 
@@ -1782,7 +1806,7 @@ impl Shape {
     pub fn masked_group_layer_blur(&self) -> Option<Blur> {
         use crate::shapes::BlurType;
         match self.shape_type {
-            Type::Group(Group { masked: true }) => self.blur.filter(|blur| {
+            Type::Group(Group { masked: true, .. }) => self.blur.filter(|blur| {
                 !blur.hidden && blur.blur_type == BlurType::LayerBlur && blur.value > 0.0
             }),
             _ => None,
@@ -1925,7 +1949,10 @@ mod tests {
     #[test]
     fn test_set_masked() {
         let mut shape = any_shape();
-        shape.set_shape_type(Type::Group(Group { masked: false }));
+        shape.set_shape_type(Type::Group(Group {
+            masked: false,
+            ..Default::default()
+        }));
         shape.set_masked(true);
 
         if let Type::Group(Group { masked, .. }) = shape.shape_type {
@@ -1957,7 +1984,10 @@ mod tests {
 
         {
             let group = pool.add_shape(group_id);
-            group.set_shape_type(Type::Group(Group { masked: true }));
+            group.set_shape_type(Type::Group(Group {
+                masked: true,
+                ..Default::default()
+            }));
             group.children = vec![mask_id, content_id];
         }
 

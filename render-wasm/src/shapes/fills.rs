@@ -116,6 +116,32 @@ impl Gradient {
             Some(&transform),
         )
     }
+
+    // Angular (conic) gradient: the colours go round the start point,
+    // clockwise, beginning in the direction of the end point.
+    pub fn to_sweep_shader(&self, rect: &Rect) -> Option<skia::Shader> {
+        let center = skia::Point::new(
+            rect.left + self.start.0 * rect.width(),
+            rect.top + self.start.1 * rect.height(),
+        );
+        let end = skia::Point::new(
+            rect.left + self.end.0 * rect.width(),
+            rect.top + self.end.1 * rect.height(),
+        );
+        let direction = end - center;
+        let angle = direction.y.atan2(direction.x).to_degrees();
+        let transform = skia::Matrix::rotate_deg_pivot(angle, center);
+
+        skia::gradient_shader::sweep(
+            center,
+            self.colors.as_slice(),
+            Some(self.offsets.as_slice()),
+            skia::TileMode::Clamp,
+            None,
+            None,
+            Some(&transform),
+        )
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -167,6 +193,7 @@ pub enum Fill {
     Solid(SolidColor),
     LinearGradient(Gradient),
     RadialGradient(Gradient),
+    AngularGradient(Gradient),
     Image(ImageFill),
 }
 
@@ -176,6 +203,7 @@ impl Fill {
             Fill::Solid(SolidColor(color)) => color.a() as f32 / 255.0,
             Fill::LinearGradient(g) => g.opacity as f32 / 255.0,
             Fill::RadialGradient(g) => g.opacity as f32 / 255.0,
+            Fill::AngularGradient(g) => g.opacity as f32 / 255.0,
             Fill::Image(i) => i.opacity as f32 / 255.0,
         }
     }
@@ -193,6 +221,10 @@ impl Fill {
                 ..g.clone()
             }),
             Fill::RadialGradient(g) => Fill::RadialGradient(Gradient {
+                opacity: 255,
+                ..g.clone()
+            }),
+            Fill::AngularGradient(g) => Fill::AngularGradient(Gradient {
                 opacity: 255,
                 ..g.clone()
             }),
@@ -216,6 +248,15 @@ impl Fill {
             Self::LinearGradient(gradient) => {
                 let mut p = skia::Paint::default();
                 p.set_shader(gradient.to_linear_shader(rect));
+                p.set_alpha(gradient.opacity);
+                p.set_style(skia::PaintStyle::Fill);
+                p.set_anti_alias(anti_alias);
+                p.set_blend_mode(skia::BlendMode::SrcOver);
+                p
+            }
+            Self::AngularGradient(gradient) => {
+                let mut p = skia::Paint::default();
+                p.set_shader(gradient.to_sweep_shader(rect));
                 p.set_alpha(gradient.opacity);
                 p.set_style(skia::PaintStyle::Fill);
                 p.set_anti_alias(anti_alias);
@@ -248,6 +289,7 @@ pub fn get_fill_shader(fill: &Fill, bounding_box: &Rect) -> Option<skia::Shader>
         Fill::Solid(SolidColor(color)) => Some(skia::shaders::color(*color)),
         Fill::LinearGradient(gradient) => gradient.to_linear_shader(bounding_box),
         Fill::RadialGradient(gradient) => gradient.to_radial_shader(bounding_box),
+        Fill::AngularGradient(gradient) => gradient.to_sweep_shader(bounding_box),
         Fill::Image(image_fill) => {
             let mut image_shader = None;
             let image = get_image(&image_fill.id);

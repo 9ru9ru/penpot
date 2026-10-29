@@ -42,7 +42,8 @@
       (props/set-shape-svg-attrs (get shape :svg-attrs)))
 
     (when (= type :group)
-      (props/set-masked (boolean (get shape :masked-group))))
+      (props/set-masked (boolean (get shape :masked-group)))
+      (props/set-mask-luminance (= :luminance (get shape :mask-type))))
 
     (when (= type :bool)
       (props/set-shape-bool-type (get shape :bool-type)))

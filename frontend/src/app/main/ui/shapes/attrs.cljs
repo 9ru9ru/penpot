@@ -115,6 +115,9 @@
         (when (some? opacity)
           (obj/set! attrs "strokeOpacity" opacity))
 
+        (when-let [join (:stroke-join data)]
+          (obj/set! attrs "strokeLinejoin" (name join)))
+
         (when (not= style :svg)
           (obj/set! attrs "strokeDasharray" (calculate-dasharray style width dash gap)))
 

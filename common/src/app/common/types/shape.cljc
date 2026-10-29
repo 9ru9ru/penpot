@@ -154,6 +154,8 @@
     [::sm/one-of stroke-caps]]
    [:stroke-cap-end {:optional true}
     [::sm/one-of stroke-caps]]
+   [:stroke-join {:optional true}
+    [::sm/one-of #{:miter :round :bevel}]]
    [:stroke-color {:optional true} clr/schema:hex-color]
    [:stroke-color-gradient {:optional true} clr/schema:gradient]
    [:stroke-image {:optional true} clr/schema:image]
@@ -204,6 +206,7 @@
    [:locked {:optional true} :boolean]
    [:hidden {:optional true} :boolean]
    [:masked-group {:optional true} :boolean]
+   [:mask-type {:optional true} [::sm/one-of #{:alpha :luminance}]]
    [:fills {:optional true} schema:fills]
    [:proportion {:optional true} ::sm/safe-number]
    [:proportion-lock {:optional true} :boolean]
@@ -430,7 +433,7 @@
 (def ^:private allowed-shape-attrs
   #{:page-id :component-id :component-file :component-root :main-instance
     :remote-synced :shape-ref :touched :blocked :collapsed :locked
-    :hidden :masked-group :fills :proportion :proportion-lock :constraints-h
+    :hidden :masked-group :mask-type :fills :proportion :proportion-lock :constraints-h
     :constraints-v :fixed-scroll :r1 :r2 :r3 :r4 :rotation :opacity :grids :exports
     :strokes :blend-mode :interactions :shadow :blur :background-blur :grow-type :applied-tokens
     :embed :plugin-data})

@@ -3,6 +3,7 @@ use macros::ToJs;
 use crate::mem;
 use crate::shapes::{self, StrokeCap, StrokeStyle};
 use crate::with_current_shape_mut;
+use skia_safe as skia;
 
 #[derive(Debug, Clone, PartialEq, Copy, ToJs)]
 #[repr(u8)]
@@ -160,6 +161,22 @@ pub extern "C" fn set_shape_stroke_sides(top: f32, right: f32, bottom: f32, left
         shape
             .set_last_stroke_widths([top, right, bottom, left])
             .expect("could not set stroke side widths");
+    });
+}
+
+/// Sets the corner join of the last added stroke: 0 miter, 1 round,
+/// 2 bevel (the values of `RawStrokeLineJoin`).
+#[no_mangle]
+pub extern "C" fn set_shape_stroke_join(join: u8) {
+    let join = match join {
+        1 => skia::paint::Join::Round,
+        2 => skia::paint::Join::Bevel,
+        _ => skia::paint::Join::Miter,
+    };
+    with_current_shape_mut!(state, |shape: &mut Shape| {
+        shape
+            .set_last_stroke_join(join)
+            .expect("could not set stroke join");
     });
 }
 

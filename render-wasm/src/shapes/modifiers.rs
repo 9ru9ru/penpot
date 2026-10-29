@@ -357,7 +357,7 @@ fn propagate_reflow(
         }) => {
             layout_reflows.insert(*id);
         }
-        Type::Group(Group { masked: true }) => {
+        Type::Group(Group { masked: true, .. }) => {
             // Masked group bounds are the mask shape bounds (first child in stored
             // order, children_ids returns children in reverse order)
             if let Some(shape_bounds) = calculate_masked_group_bounds(shape, shapes, bounds) {
@@ -614,7 +614,10 @@ mod tests {
             content.set_selrect(0.0, 0.0, 10.0, 10.0);
 
             let parent = shapes.add_shape(parent_id);
-            parent.set_shape_type(Type::Group(Group { masked: true }));
+            parent.set_shape_type(Type::Group(Group {
+                masked: true,
+                ..Default::default()
+            }));
             parent.add_child(mask_id);
             parent.add_child(content_id);
             parent.set_selrect(1.0, 1.0, 5.0, 5.0);

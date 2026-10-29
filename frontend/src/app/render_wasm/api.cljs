@@ -734,6 +734,10 @@
   [masked]
   (props/set-masked masked))
 
+(defn set-mask-luminance
+  [luminance?]
+  (props/set-mask-luminance luminance?))
+
 (defn set-shape-selrect
   [selrect]
   (h/call wasm/internal-module "_set_shape_selrect"

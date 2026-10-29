@@ -31,6 +31,7 @@
            stroke
            title
            show-caps
+           on-stroke-join-change
            on-color-change
            on-reorder
            on-color-detach
@@ -235,6 +236,21 @@
         (mf/use-fn
          (mf/deps index on-stroke-style-change)
          #(on-stroke-style-change index (keyword %)))
+
+        stroke-join (d/name (or (:stroke-join stroke) :miter))
+
+        stroke-join-options
+        (mf/with-memo []
+          [{:value "miter" :label (tr "workspace.options.stroke.join-miter") :id "miter"}
+           {:value "round" :label (tr "workspace.options.stroke.join-round") :id "round"}
+           {:value "bevel" :label (tr "workspace.options.stroke.join-bevel") :id "bevel"}])
+
+        on-join-change
+        (mf/use-fn
+         (mf/deps index on-stroke-join-change)
+         (fn [value]
+           (when on-stroke-join-change
+             (on-stroke-join-change index (keyword value)))))
 
         on-caps-start-change
         (mf/use-fn
@@ -484,6 +500,17 @@
                                     :class (stl/css :numeric-input-wrapper)
                                     :property (tr "workspace.options.stroke-gap")
                                     :value stroke-gap}]])
+
+     ;; Stroke join
+     (when (and on-stroke-join-change (not= :multiple (:stroke-join stroke)))
+       [:div {:class (stl/css :stroke-join-options)
+              :title (tr "workspace.options.stroke.join")}
+        [:span {:class (stl/css :stroke-join-label)} (tr "workspace.options.stroke.join")]
+        [:> select* {:default-selected stroke-join
+                     :options stroke-join-options
+                     :data-testid "stroke.join"
+                     :disabled hidden?
+                     :on-change on-join-change}]])
 
      ;; Stroke Caps
      (when show-caps

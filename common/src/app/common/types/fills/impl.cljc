@@ -89,8 +89,9 @@
         alpha   (mth/floor (* opacity 0xff))
         width   (:width gradient 0)
         stops   (into [] xf:take-stops (:stops gradient))
-        type    (if (= (:type gradient) :linear)
-                  0x01
+        type    (case (:type gradient)
+                  :linear  0x01
+                  :angular 0x04
                   0x02)]
 
     (buf/write-byte  buffer (+ offset 0)  type)
@@ -179,7 +180,7 @@
                     {:fill-color (get-color-hex rgba)
                      :fill-opacity (get-color-alpha rgba)})
 
-                  (1 2)
+                  (1 2 4)
                   (let [start-x (buf/read-float dbuffer (+ doffset 4))
                         start-y (buf/read-float dbuffer (+ doffset 8))
                         end-x   (buf/read-float dbuffer (+ doffset 12))
@@ -188,8 +189,9 @@
                         width   (buf/read-float dbuffer (+ doffset 24))
                         stops   (buf/read-byte  dbuffer (+ doffset 28))
                         opacity (mth/precision (/ alpha 0xff) 2)
-                        type    (if (= type 1)
-                                  :linear
+                        type    (case type
+                                  1 :linear
+                                  4 :angular
                                   :radial)
                         stops   (loop [index  0
                                        result []]

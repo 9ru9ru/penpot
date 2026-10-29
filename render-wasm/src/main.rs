@@ -500,6 +500,15 @@ pub extern "C" fn set_shape_masked_group(masked: bool) -> Result<()> {
 
 #[no_mangle]
 #[wasm_error]
+pub extern "C" fn set_shape_mask_luminance(luminance: bool) -> Result<()> {
+    with_current_shape_mut!(state, |shape: &mut Shape| {
+        shape.set_mask_luminance(luminance);
+    });
+    Ok(())
+}
+
+#[no_mangle]
+#[wasm_error]
 pub extern "C" fn set_shape_selrect(left: f32, top: f32, right: f32, bottom: f32) -> Result<()> {
     with_current_shape_mut!(state, |shape: &mut Shape| {
         shape.set_selrect(left, top, right, bottom);

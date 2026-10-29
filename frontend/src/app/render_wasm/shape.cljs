@@ -235,9 +235,10 @@
           (api/set-shape-background-blur (:background-blur shape))
           (api/set-shape-shadows (:shadow shape)))
 
-        :masked-group
+        (:masked-group :mask-type)
         (when (cfh/group-shape? shape)
-          (api/set-masked (boolean (:masked-group shape))))
+          (api/set-masked (boolean (:masked-group shape)))
+          (api/set-mask-luminance (= :luminance (:mask-type shape))))
 
         :content
         (cond

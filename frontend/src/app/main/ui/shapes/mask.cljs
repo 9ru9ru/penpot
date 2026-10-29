@@ -53,6 +53,10 @@
     {::mf/wrap-props false}
     [props]
     (let [mask       (unchecked-get props "mask")
+          ;; A luminance mask keeps its colours: SVG masks work by
+          ;; brightness, and painting the mask white makes it hide by
+          ;; opacity only.
+          luminance? (unchecked-get props "luminance")
           render-id  (mf/use-ctx muc/render-id)
 
           svg-text?  (and ^boolean (cfh/text-shape? mask)
@@ -71,10 +75,10 @@
           bw         (dm/get-prop bounds :width)
           bh         (dm/get-prop bounds :height)
 
-          shape      (mf/with-memo [mask]
+          shape      (mf/with-memo [mask luminance?]
                        (-> mask
                            (dissoc :shadow :blur)
-                           (assoc :is-mask? true)))]
+                           (assoc :is-mask? (not luminance?))))]
 
       [:defs
        [:filter {:id (filter-id render-id mask)}
@@ -108,7 +112,7 @@
                :data-old-height bh
                :mask-units "userSpaceOnUse"}
 
-        [:g {:filter (when-not ^boolean svg-text?
+        [:g {:filter (when-not (or ^boolean svg-text? luminance?)
                        (filter-url render-id mask))}
          [:& shape-wrapper {:shape shape}]]]])))
 

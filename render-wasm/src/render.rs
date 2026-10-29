@@ -356,6 +356,8 @@ pub(crate) struct RenderState {
     pub background_color: skia::Color,
     // Stack of nodes pending to be rendered.
     pending_nodes: Vec<NodeRenderState>,
+    // Mask shapes of groups that mask by brightness instead of opacity.
+    luminance_masks: HashSet<Uuid>,
     pub current_tile: Option<tiles::Tile>,
     pub render_area: Rect,
     // render_area expanded by surface margins — used for visibility checks so that
@@ -570,6 +572,7 @@ impl RenderState {
             cached_viewbox: Viewbox::new(0., 0.),
             background_color: skia::Color::TRANSPARENT,
             pending_nodes: vec![],
+            luminance_masks: HashSet::new(),
             current_tile: None,
             render_area: Rect::new_empty(),
             render_area_with_margins: Rect::new_empty(),
@@ -2673,6 +2676,9 @@ impl RenderState {
         if mask {
             let mut mask_paint = skia::Paint::default();
             mask_paint.set_blend_mode(skia::BlendMode::DstIn);
+            if self.luminance_masks.contains(&element.id) {
+                mask_paint.set_color_filter(skia::luma_color_filter::new());
+            }
             let mask_rec = skia::canvas::SaveLayerRec::default().paint(&mask_paint);
             self.surfaces.canvas(target_surface).save_layer(&mask_rec);
         }
@@ -2740,6 +2746,11 @@ impl RenderState {
                         flattened: false,
                     });
                     if let Some(&mask_id) = element.mask_id() {
+                        if element.is_luminance_mask() {
+                            self.luminance_masks.insert(mask_id);
+                        } else {
+                            self.luminance_masks.remove(&mask_id);
+                        }
                         self.pending_nodes.push(NodeRenderState {
                             id: mask_id,
                             visited_children: false,

@@ -735,6 +735,9 @@ fn render_group(
         if let Some(mask_id) = element.mask_id() {
             let mut mask_paint = Paint::default();
             mask_paint.set_blend_mode(skia::BlendMode::DstIn);
+            if element.is_luminance_mask() {
+                mask_paint.set_color_filter(skia::luma_color_filter::new());
+            }
             canvas.save_layer(&skia::canvas::SaveLayerRec::default().paint(&mask_paint));
             render_tree_inner(shared, canvas, mask_id, tree, scale, opts)?;
             canvas.restore(); // mask layer

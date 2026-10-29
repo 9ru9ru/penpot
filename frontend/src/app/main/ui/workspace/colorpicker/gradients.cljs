@@ -22,6 +22,7 @@
    [app.main.ui.hooks :as h]
    [app.main.ui.workspace.sidebar.options.rows.color-row :refer [color-row*]]
    [app.util.dom :as dom]
+   [app.util.i18n :refer [tr]]
    [cuerdas.core :as str]
    [rumext.v2 :as mf]))
 
@@ -338,8 +339,9 @@
      [:div {:class (stl/css :gradient-options)}
       [:& select
        {:default-value type
-        :options [{:value :linear-gradient :label "Linear"}
-                  {:value :radial-gradient :label "Radial"}]
+        :options [{:value :linear-gradient :label (tr "workspace.gradients.linear")}
+                  {:value :radial-gradient :label (tr "workspace.gradients.radial")}
+                  {:value :angular-gradient :label (tr "workspace.gradients.angular")}]
         :on-change handle-change-type
         :class (stl/css :gradient-options-select)}]
 

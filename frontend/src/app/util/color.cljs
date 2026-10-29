@@ -25,14 +25,16 @@
 
         stops-css (str/join "," (map parse-stop stops))]
 
-    (if (= type :linear)
-      (str/fmt "linear-gradient(to bottom, %s)" stops-css)
+    (case type
+      :linear  (str/fmt "linear-gradient(to bottom, %s)" stops-css)
+      :angular (str/fmt "conic-gradient(%s)" stops-css)
       (str/fmt "radial-gradient(circle, %s)" stops-css))))
 
 (defn gradient-type->string [type]
   (case type
     :linear (tr "workspace.gradients.linear")
     :radial (tr "workspace.gradients.radial")
+    :angular (tr "workspace.gradients.angular")
     nil))
 
 ;; TODO: REMOVE `VALUE` WHEN COLOR IS INTEGRATED

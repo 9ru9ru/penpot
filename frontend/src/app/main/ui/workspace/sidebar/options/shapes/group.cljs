@@ -20,6 +20,7 @@
    [app.main.ui.workspace.sidebar.options.menus.layer :refer [layer-menu*]]
    [app.main.ui.workspace.sidebar.options.menus.layout-container :refer [layout-container-flex-attrs layout-container-menu*]]
    [app.main.ui.workspace.sidebar.options.menus.layout-item :refer [layout-item-menu*]]
+   [app.main.ui.workspace.sidebar.options.menus.mask :refer [mask-menu*]]
    [app.main.ui.workspace.sidebar.options.menus.measures :refer [measures-menu*]]
    [app.main.ui.workspace.sidebar.options.menus.shadow :refer [shadow-menu*]]
    [app.main.ui.workspace.sidebar.options.menus.stroke :refer [stroke-menu*]]
@@ -121,6 +122,9 @@
                          :applied-tokens applied-tokens
                          :values measure-values
                          :shapes shapes}]
+
+     (when (:masked-group shape)
+       [:> mask-menu* {:ids ids :mask-type (:mask-type shape)}])
 
      [:> layout-container-menu*
       {:type type

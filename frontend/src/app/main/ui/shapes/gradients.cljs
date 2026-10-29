@@ -13,6 +13,8 @@
    [app.common.geom.point :as gpt]
    [app.common.geom.rect :as grc]
    [app.common.geom.shapes :as gsh]
+   [app.common.math :as mth]
+   [app.common.types.color :as clr]
    [app.main.ui.context :as muc]
    [app.main.ui.shapes.export :as ed]
    [app.util.object :as obj]
@@ -115,6 +117,55 @@
                :stop-color color
                :stop-opacity opacity}])]))
 
+(def ^:private angular-steps 120)
+
+(defn- wedge-path
+  "A pie slice of radius `r` between two angles in degrees."
+  [r a1 a2]
+  (let [p1 (gpt/point (* r (mth/cos (mth/radians a1))) (* r (mth/sin (mth/radians a1))))
+        p2 (gpt/point (* r (mth/cos (mth/radians a2))) (* r (mth/sin (mth/radians a2))))]
+    (dm/str "M0 0L" (:x p1) " " (:y p1) "A" r " " r " 0 0 1 " (:x p2) " " (:y p2) "Z")))
+
+(mf/defc angular-gradient
+  "SVG has no conic gradient, so it is drawn as many thin slices in a
+  pattern. Angle 0 points from the start point to the end point and the
+  colours go round clockwise, as the WASM renderer draws it."
+  {::mf/wrap-props false}
+  [{:keys [id gradient shape]}]
+  (let [{:keys [start-x start-y end-x end-y]} gradient
+        selrect (:selrect shape)
+        w       (max 0.01 (d/nilv (:width selrect) 1))
+        h       (max 0.01 (d/nilv (:height selrect) 1))
+        ;; The pattern works in box units; the slices are laid out in
+        ;; pixels so the angles don't stretch with the box.
+        angle   (gpt/angle (gpt/point (* w (- end-x start-x)) (* h (- end-y start-y))))
+        radius  (* 3 (max w h))
+        stops   (mf/with-memo [gradient]
+                  (vec (sort-by :offset (:stops gradient))))
+        step    (/ 360 angular-steps)
+        metadata? (mf/use-ctx ed/include-metadata-ctx)
+        props   #js {:id id
+                     :patternUnits "objectBoundingBox"
+                     :patternContentUnits "objectBoundingBox"
+                     :width 1
+                     :height 1}]
+
+    (when ^boolean metadata?
+      (add-metadata! props gradient))
+
+    [:> :pattern props
+     [:g {:transform (dm/str "translate(" start-x " " start-y ") scale(" (/ 1 w) " " (/ 1 h) ") rotate(" angle ")")}
+      (for [i (range angular-steps)]
+        (let [{:keys [color opacity]} (clr/interpolate-gradient stops (/ (+ i 0.5) angular-steps))]
+          [:path {:key (dm/str id "-w-" i)
+                  ;; A little overlap, and an outline on opaque slices,
+                  ;; hide the anti-aliased seams between slices.
+                  :d (wedge-path radius (* i step) (+ (* (inc i) step) 0.5))
+                  :fill color
+                  :fill-opacity opacity
+                  :stroke (when (>= opacity 1) color)
+                  :stroke-width (* radius 0.003)}]))]]))
+
 (mf/defc gradient
   {::mf/wrap-props false}
   [props]
@@ -134,6 +185,7 @@
 
     (when (some? gradient)
       (case (:type gradient)
-        :linear [:> linear-gradient props]
-        :radial [:> radial-gradient props]
+        :linear  [:> linear-gradient props]
+        :radial  [:> radial-gradient props]
+        :angular [:> angular-gradient props]
         nil))))

@@ -10414,3 +10414,35 @@ msgstr "꼭짓점 수"
 #: src/app/main/ui/workspace/sidebar/options/menus/polygon.cljs
 msgid "workspace.options.polygon.ratio"
 msgstr "별 안쪽 비율 (%)"
+
+#: src/app/main/ui/workspace/sidebar/options/rows/stroke_row.cljs
+msgid "workspace.options.stroke.join"
+msgstr "모서리 연결"
+
+#: src/app/main/ui/workspace/sidebar/options/rows/stroke_row.cljs
+msgid "workspace.options.stroke.join-miter"
+msgstr "각지게"
+
+#: src/app/main/ui/workspace/sidebar/options/rows/stroke_row.cljs
+msgid "workspace.options.stroke.join-round"
+msgstr "둥글게"
+
+#: src/app/main/ui/workspace/sidebar/options/rows/stroke_row.cljs
+msgid "workspace.options.stroke.join-bevel"
+msgstr "깎아서"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/mask.cljs
+msgid "workspace.options.mask"
+msgstr "마스크"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/mask.cljs
+msgid "workspace.options.mask.alpha"
+msgstr "알파 (불투명도)"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/mask.cljs
+msgid "workspace.options.mask.luminance"
+msgstr "루미넌스 (밝기)"
+
+#: src/app/main/ui/workspace/colorpicker/gradients.cljs
+msgid "workspace.gradients.angular"
+msgstr "각도형 그래디언트"

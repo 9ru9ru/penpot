@@ -99,6 +99,9 @@
                  :outer (h/call wasm/internal-module "_add_shape_outer_stroke" width style cap-start cap-end dash gap)
                  (h/call wasm/internal-module "_add_shape_center_stroke" width style cap-start cap-end dash gap))
 
+               (when-let [join (:stroke-join stroke)]
+                 (h/call wasm/internal-module "_set_shape_stroke_join" (sr/translate-stroke-linejoin join)))
+
                ;; Per-side widths (rects/frames). Sides falling back to the
                ;; uniform width; skipped when all sides end up equal, so the
                ;; renderer keeps the uniform path (with dash/dot support).
@@ -171,6 +174,10 @@
 (defn set-masked
   [masked]
   (h/call wasm/internal-module "_set_shape_masked_group" masked))
+
+(defn set-mask-luminance
+  [luminance?]
+  (h/call wasm/internal-module "_set_shape_mask_luminance" luminance?))
 
 (defn set-shape-svg-attrs
   [attrs]
