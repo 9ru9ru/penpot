@@ -10589,3 +10589,15 @@ msgstr "and %s more"
 #: src/app/main/ui/workspace/bulk_rename.cljs
 msgid "workspace.bulk-rename.apply"
 msgstr "Rename %s"
+
+#: src/app/main/ui/workspace/sidebar/layers.cljs
+msgid "workspace.sidebar.layers.match-case"
+msgstr "Match case"
+
+#: src/app/main/ui/workspace/sidebar/layers.cljs
+msgid "workspace.sidebar.layers.whole-word"
+msgstr "Match whole word"
+
+#: src/app/main/ui/workspace/sidebar/layers.cljs
+msgid "workspace.sidebar.layers.regex"
+msgstr "Use regular expression"

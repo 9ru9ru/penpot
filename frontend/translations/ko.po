@@ -8464,3 +8464,43 @@ msgstr "외 %s개"
 #: src/app/main/ui/workspace/bulk_rename.cljs
 msgid "workspace.bulk-rename.apply"
 msgstr "%s개 바꾸기"
+
+#: src/app/main/ui/workspace/sidebar/layers.cljs
+msgid "workspace.sidebar.layers.match-case"
+msgstr "대소문자 구분"
+
+#: src/app/main/ui/workspace/sidebar/layers.cljs
+msgid "workspace.sidebar.layers.whole-word"
+msgstr "단어 단위로 찾기"
+
+#: src/app/main/ui/workspace/sidebar/layers.cljs
+msgid "workspace.sidebar.layers.regex"
+msgstr "정규식 사용"
+
+#: src/app/main/ui/workspace/sidebar/layers.cljs:587
+msgid "workspace.sidebar.layers.replace-placeholder"
+msgstr "바꿀 내용…"
+
+#: src/app/main/ui/workspace/sidebar/layers.cljs:606
+msgid "workspace.sidebar.layers.search-scope-canvas"
+msgstr "텍스트 내용"
+
+#: src/app/main/ui/workspace/sidebar/layers.cljs:610
+msgid "workspace.sidebar.layers.search-scope-layers"
+msgstr "레이어 이름"
+
+#: src/app/main/ui/workspace/sidebar/layers.cljs:620
+msgid "workspace.sidebar.layers.replace"
+msgstr "바꾸기"
+
+#: src/app/main/ui/workspace/sidebar/layers.cljs:626
+msgid "workspace.sidebar.layers.replace-all"
+msgstr "모두 바꾸기"
+
+#: src/app/main/ui/workspace/sidebar/layers.cljs:601
+msgid "workspace.sidebar.layers.no-matches"
+msgstr "일치 항목 없음"
+
+#: src/app/main/ui/workspace/sidebar/layers.cljs:575
+msgid "workspace.sidebar.layers.search-and-replace"
+msgstr "찾기 및 바꾸기"

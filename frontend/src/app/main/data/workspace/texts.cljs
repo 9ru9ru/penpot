@@ -26,6 +26,7 @@
    [app.main.data.helpers :as dsh]
    [app.main.data.workspace :as-alias dw]
    [app.main.data.workspace.common :as dwc]
+   [app.main.data.workspace.find-replace :as dwfr]
    [app.main.data.workspace.libraries :as dwl]
    [app.main.data.workspace.modifiers :as dwm]
    [app.main.data.workspace.pages :as-alias dwpg]
@@ -1425,39 +1426,45 @@
                                  {:undo-group (when new-shape? id)}))))))))
 
 (defn replace-layer-names-in-shapes
-  [ids search replacement]
-  (ptk/reify ::replace-layer-names-in-shapes
-    ptk/WatchEvent
-    (watch [_ _ _]
-      (let [undo-group (uuid/next)]
-        (rx/of
-         (dwsh/update-shapes
-          ids
-          (fn [shape] (update shape :name txt/replace-all-case-insensitive search replacement))
-          {:attrs #{:name} :undo-group undo-group}))))))
+  ([ids search replacement]
+   (replace-layer-names-in-shapes ids search replacement nil))
+  ([ids search replacement opts]
+   (ptk/reify ::replace-layer-names-in-shapes
+     ptk/WatchEvent
+     (watch [_ _ _]
+       (let [undo-group (uuid/next)
+             re         (dwfr/matcher search opts)]
+         (rx/of
+          (dwsh/update-shapes
+           ids
+           (fn [shape] (update shape :name #(dwfr/replace-all re % replacement opts)))
+           {:attrs #{:name} :undo-group undo-group})))))))
 
 (defn replace-text-in-shapes
-  [ids search replacement]
-  (ptk/reify ::replace-text-in-shapes
-    ptk/WatchEvent
-    (watch [_ state _]
-      (let [undo-group (uuid/next)
-            update-event
-            (dwsh/update-shapes
-             ids
-             (fn [shape]
-               (if (and (= :text (:type shape)) (some? (:content shape)))
-                 (let [new-content (txt/replace-text-in-content (:content shape) search replacement)
-                       new-name    (txt/generate-shape-name (txt/content->text new-content))]
-                   (-> shape (assoc :content new-content) (assoc :name new-name)))
-                 shape))
-             {:attrs #{:content :name} :undo-group undo-group})]
-        (rx/concat
-         (rx/of update-event)
-         (if (features/active-feature? state "render-wasm/v1")
-           (->> (rx/from ids)
-                (rx/map #(dwwt/resize-wasm-text-debounce % {:undo-group undo-group})))
-           (rx/empty)))))))
+  ([ids search replacement]
+   (replace-text-in-shapes ids search replacement nil))
+  ([ids search replacement opts]
+   (ptk/reify ::replace-text-in-shapes
+     ptk/WatchEvent
+     (watch [_ state _]
+       (let [undo-group (uuid/next)
+             re         (dwfr/matcher search opts)
+             update-event
+             (dwsh/update-shapes
+              ids
+              (fn [shape]
+                (if (and (= :text (:type shape)) (some? (:content shape)))
+                  (let [new-content (dwfr/replace-in-content re (:content shape) replacement opts)
+                        new-name    (txt/generate-shape-name (txt/content->text new-content))]
+                    (-> shape (assoc :content new-content) (assoc :name new-name)))
+                  shape))
+              {:attrs #{:content :name} :undo-group undo-group})]
+         (rx/concat
+          (rx/of update-event)
+          (if (features/active-feature? state "render-wasm/v1")
+            (->> (rx/from (vec ids))
+                 (rx/map #(dwwt/resize-wasm-text-debounce % {:undo-group undo-group})))
+            (rx/empty))))))))
 
 ;; -- Text Editor v3
 

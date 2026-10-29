@@ -142,6 +142,39 @@
   block-size: $sz-32;
 }
 
+.search-options {
+  display: flex;
+  gap: var(--sp-xxs);
+  margin-inline-start: auto;
+}
+
+.search-option {
+  @include t.use-typography("body-small");
+
+  min-inline-size: $sz-24;
+  block-size: $sz-24;
+  padding: 0 var(--sp-xs);
+  border: $b-1 solid transparent;
+  border-radius: $br-6;
+  background: none;
+  color: var(--color-foreground-secondary);
+  font-family: monospace;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--color-foreground-primary);
+  }
+}
+
+.search-option-whole {
+  text-decoration: underline;
+}
+
+.search-option-on {
+  border-color: var(--color-accent-primary);
+  color: var(--color-accent-primary);
+}
+
 .replace-actions-row {
   display: flex;
   gap: var(--sp-xs);

@@ -11,9 +11,9 @@
    [app.common.data.macros :as dm]
    [app.common.files.helpers :as cfh]
    [app.common.types.shape :as cts]
-   [app.common.types.text :as txt]
    [app.common.uuid :as uuid]
    [app.main.data.workspace :as dw]
+   [app.main.data.workspace.find-replace :as dwfr]
    [app.main.data.workspace.texts :as dwt]
    [app.main.refs :as refs]
    [app.main.store :as st]
@@ -222,12 +222,14 @@
         filters (cond-> filters
                   (contains? filters :shape)
                   (conj :rect :circle :path :bool))
+        re      (:re state)
         text-match? (case scope
                       :canvas (and (= :text (:type shape))
                                    (some? (:content shape))
-                                   (txt/content-has-text? (:content shape) search))
-                      (or (str/includes? (str/lower (:name shape)) (str/lower search))
-                          (str/includes? (str/lower (:variant-name shape)) (str/lower search))
+                                   (dwfr/content-matches? re (:content shape)))
+                      (or (empty? search)
+                          (dwfr/matches? re (:name shape))
+                          (dwfr/matches? re (:variant-name shape))
                           ;; Dev-only: allow search by id
                           (and *assert* (str/includes? (dm/str (:id shape)) (str/lower search)))))]
     (or (= uuid/zero id)
@@ -270,9 +272,16 @@
                                      :replace-text ""
                                      :filters #{}
                                      :num-items 100
-                                     :current-match-idx 0}))
+                                     :current-match-idx 0
+                                     :match-case? false
+                                     :whole-word? false
+                                     :regex? false}))
         layers-search         (mf/deref ref:layers-search)
         state                 (deref state*)
+        match-opts            (select-keys state [:match-case? :whole-word? :regex?])
+        search-re             (mf/with-memo [(:search-text state) match-opts]
+                                (dwfr/matcher (:search-text state) match-opts))
+        state                 (assoc state :re search-re)
         current-filters       (:filters state)
         current-items         (:num-items state)
         current-search        (:search-text state)
@@ -408,24 +417,31 @@
         (count filtered-objects-all)
 
         canvas-match-ids
-        (mf/with-memo [objects current-search search-scope]
-          (when (and (= :canvas search-scope) (d/not-empty? current-search))
+        (mf/with-memo [objects search-re search-scope]
+          (when (and (= :canvas search-scope) (some? search-re))
             (reduce-kv (fn [acc id shape]
                          (cond-> acc
                            (and (= :text (:type shape))
                                 (some? (:content shape))
-                                (txt/content-has-text? (:content shape) current-search))
+                                (dwfr/content-matches? search-re (:content shape)))
                            (conj id)))
                        [] objects)))
 
         layer-match-ids
-        (mf/with-memo [objects current-search search-scope]
-          (when (and (= :layers search-scope) (d/not-empty? current-search))
+        (mf/with-memo [objects search-re search-scope]
+          (when (and (= :layers search-scope) (some? search-re))
             (reduce-kv (fn [acc id shape]
                          (cond-> acc
-                           (str/includes? (str/lower (:name shape)) (str/lower current-search))
+                           (dwfr/matches? search-re (:name shape))
                            (conj id)))
                        [] objects)))
+
+        toggle-option
+        (mf/use-fn
+         (fn [option]
+           (swap! state* (fn [s] (-> s (update option not) (assoc :current-match-idx 0))))))
+
+        bad-regex?        (and (:regex? state) (d/not-empty? current-search) (nil? search-re))
 
         text-match-ids    (if (= :canvas search-scope) canvas-match-ids layer-match-ids)
         text-match-count  (count text-match-ids)
@@ -464,22 +480,22 @@
 
         handle-replace
         (mf/use-fn
-         (mf/deps text-match-ids safe-match-idx replace-text current-search search-scope)
+         (mf/deps text-match-ids safe-match-idx replace-text current-search search-scope match-opts)
          (fn [_]
            (when (and (pos? text-match-count) (d/not-empty? current-search))
              (let [id (nth text-match-ids safe-match-idx)]
                (if (= :canvas search-scope)
-                 (st/emit! (dwt/replace-text-in-shapes [id] current-search replace-text))
-                 (st/emit! (dwt/replace-layer-names-in-shapes [id] current-search replace-text)))))))
+                 (st/emit! (dwt/replace-text-in-shapes [id] current-search replace-text match-opts))
+                 (st/emit! (dwt/replace-layer-names-in-shapes [id] current-search replace-text match-opts)))))))
 
         handle-replace-all
         (mf/use-fn
-         (mf/deps text-match-ids replace-text current-search search-scope)
+         (mf/deps text-match-ids replace-text current-search search-scope match-opts)
          (fn [_]
            (when (and (pos? text-match-count) (d/not-empty? current-search))
              (if (= :canvas search-scope)
-               (st/emit! (dwt/replace-text-in-shapes text-match-ids current-search replace-text))
-               (st/emit! (dwt/replace-layer-names-in-shapes text-match-ids current-search replace-text))))))
+               (st/emit! (dwt/replace-text-in-shapes text-match-ids current-search replace-text match-opts))
+               (st/emit! (dwt/replace-layer-names-in-shapes text-match-ids current-search replace-text match-opts))))))
 
         on-replace-keydown
         (mf/use-fn
@@ -621,7 +637,24 @@
             [:> radio-button* {:name "search-scope"
                                :checked (= :layers search-scope)
                                :text (tr "workspace.sidebar.layers.search-scope-layers")
-                               :on-change (partial set-search-scope :layers)}]]
+                               :on-change (partial set-search-scope :layers)}]
+            [:div {:class (stl/css :search-options)}
+             (for [[option label title] [[:match-case? "Aa" (tr "workspace.sidebar.layers.match-case")]
+                                         [:whole-word? "ab" (tr "workspace.sidebar.layers.whole-word")]
+                                         [:regex? ".*" (tr "workspace.sidebar.layers.regex")]]]
+               [:button {:key (name option)
+                         :class (stl/css-case :search-option true
+                                              :search-option-whole (= option :whole-word?)
+                                              :search-option-on (get state option))
+                         :title title
+                         :aria-label title
+                         :aria-pressed (boolean (get state option))
+                         :on-click (fn [] (toggle-option option))}
+                label])]]
+
+           (when bad-regex?
+             [:div {:class (stl/css :replace-match-count)}
+              (tr "workspace.bulk-rename.bad-regex")])
 
            (when ^boolean find-replace-mode?
              [:div {:class (stl/css :replace-actions-row)}
