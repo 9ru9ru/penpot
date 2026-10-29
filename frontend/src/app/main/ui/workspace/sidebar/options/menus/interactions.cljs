@@ -26,6 +26,7 @@
    [app.main.ui.ds.controls.numeric-input :refer [numeric-input*]]
    [app.main.ui.ds.foundations.assets.icon :as i]
    [app.main.ui.ds.product.empty-state :refer [empty-state*]]
+   [app.main.ui.workspace.sidebar.options.menus.easing-editor :refer [bezier-editor*]]
    [app.util.dom :as dom]
    [app.util.i18n :as i18n :refer [tr]]
    [app.util.keyboard :as kbd]
@@ -312,6 +313,12 @@
            (let [value (keyword event)]
              (update-interaction index #(ctsi/set-easing % value)))))
 
+        change-easing-bezier
+        (mf/use-fn
+         (mf/deps index update-interaction)
+         (fn [value]
+           (update-interaction index #(ctsi/set-easing-bezier % value))))
+
         change-way
         (mf/use-fn
          (mf/deps index update-interaction)
@@ -393,7 +400,15 @@
                         {:icon :easing-ease        :value :ease        :label (tr "workspace.options.interaction-easing-ease")}
                         {:icon :easing-ease-in     :value :ease-in     :label (tr "workspace.options.interaction-easing-ease-in")}
                         {:icon :easing-ease-out    :value :ease-out    :label (tr "workspace.options.interaction-easing-ease-out")}
-                        {:icon :easing-ease-in-out :value :ease-in-out :label (tr "workspace.options.interaction-easing-ease-in-out")}]]
+                        {:icon :easing-ease-in-out :value :ease-in-out :label (tr "workspace.options.interaction-easing-ease-in-out")}
+                        {:icon :easing-ease-in     :value :ease-in-back     :label (tr "workspace.options.interaction-easing-ease-in-back")}
+                        {:icon :easing-ease-out    :value :ease-out-back    :label (tr "workspace.options.interaction-easing-ease-out-back")}
+                        {:icon :easing-ease-in-out :value :ease-in-out-back :label (tr "workspace.options.interaction-easing-ease-in-out-back")}
+                        {:icon :easing-ease        :value :custom-bezier    :label (tr "workspace.options.interaction-easing-custom")}
+                        {:icon :easing-ease-out    :value :spring-gentle    :label (tr "workspace.options.interaction-easing-spring-gentle")}
+                        {:icon :easing-ease-out    :value :spring-quick     :label (tr "workspace.options.interaction-easing-spring-quick")}
+                        {:icon :easing-ease-out    :value :spring-bouncy    :label (tr "workspace.options.interaction-easing-spring-bouncy")}
+                        {:icon :easing-ease-out    :value :spring-slow      :label (tr "workspace.options.interaction-easing-spring-slow")}]]
 
     [:div {:class (stl/css :interaction-item)}
      [:> prototype-pill* {:title (event-type-name interaction)
@@ -627,11 +642,17 @@
                [:div {:class (stl/css :interaction-row-name)}
                 (tr "workspace.options.interaction-duration")]]
               [:div {:class (stl/css :interaction-row-input)}
-               [:> numeric-input* {:ref ext-duration-ref
-                                   :icon i/character-m
-                                   :property (tr "workspace.options.interaction-ms")
-                                   :on-change change-duration
-                                   :value (-> interaction :animation :duration)}]]])
+               (if-let [spring-ms (ctsi/spring-duration (-> interaction :animation :easing))]
+                 ;; A spring takes the time it needs to settle.
+                 [:> numeric-input* {:icon i/character-m
+                                     :property (tr "workspace.options.interaction-ms")
+                                     :disabled true
+                                     :value spring-ms}]
+                 [:> numeric-input* {:ref ext-duration-ref
+                                     :icon i/character-m
+                                     :property (tr "workspace.options.interaction-ms")
+                                     :on-change change-duration
+                                     :value (-> interaction :animation :duration)}])]])
 
            ;; Easing
            (when (ctsi/has-easing? interaction)
@@ -645,6 +666,13 @@
                            :default-value (-> interaction :animation :easing)
                            :options easing-options
                            :on-change change-easing}]]])
+
+           (when (and (ctsi/has-easing? interaction)
+                      (= :custom-bezier (-> interaction :animation :easing)))
+             [:div {:class (stl/css :interaction-row)}
+              [:> bezier-editor* {:value (or (-> interaction :animation :easing-bezier)
+                                             ctsi/default-custom-bezier)
+                                  :on-change change-easing-bezier}]])
 
            ;; Offset effect
            (when (ctsi/has-offset-effect? interaction)

@@ -8504,3 +8504,39 @@ msgstr "일치 항목 없음"
 #: src/app/main/ui/workspace/sidebar/layers.cljs:575
 msgid "workspace.sidebar.layers.search-and-replace"
 msgstr "찾기 및 바꾸기"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/interactions.cljs
+msgid "workspace.options.interaction-easing-ease-in-back"
+msgstr "뒤로 당겼다 가속 (Ease in back)"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/interactions.cljs
+msgid "workspace.options.interaction-easing-ease-out-back"
+msgstr "지나쳤다 돌아오기 (Ease out back)"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/interactions.cljs
+msgid "workspace.options.interaction-easing-ease-in-out-back"
+msgstr "양쪽 back (Ease in-out back)"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/interactions.cljs
+msgid "workspace.options.interaction-easing-custom"
+msgstr "사용자 지정 베지어"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/interactions.cljs
+msgid "workspace.options.interaction-easing-spring-gentle"
+msgstr "스프링: 부드럽게"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/interactions.cljs
+msgid "workspace.options.interaction-easing-spring-quick"
+msgstr "스프링: 빠르게"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/interactions.cljs
+msgid "workspace.options.interaction-easing-spring-bouncy"
+msgstr "스프링: 통통 튀게"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/interactions.cljs
+msgid "workspace.options.interaction-easing-spring-slow"
+msgstr "스프링: 천천히"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/interactions.cljs
+msgid "workspace.options.interaction-easing-custom-hint"
+msgstr "숫자 4개(예: 0.25, 0.1, 0.25, 1)를 입력하거나 손잡이를 끌어 조절"

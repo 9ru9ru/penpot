@@ -10601,3 +10601,39 @@ msgstr "Match whole word"
 #: src/app/main/ui/workspace/sidebar/layers.cljs
 msgid "workspace.sidebar.layers.regex"
 msgstr "Use regular expression"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/interactions.cljs
+msgid "workspace.options.interaction-easing-ease-in-back"
+msgstr "Ease in back"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/interactions.cljs
+msgid "workspace.options.interaction-easing-ease-out-back"
+msgstr "Ease out back"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/interactions.cljs
+msgid "workspace.options.interaction-easing-ease-in-out-back"
+msgstr "Ease in and out back"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/interactions.cljs
+msgid "workspace.options.interaction-easing-custom"
+msgstr "Custom bezier"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/interactions.cljs
+msgid "workspace.options.interaction-easing-spring-gentle"
+msgstr "Spring: gentle"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/interactions.cljs
+msgid "workspace.options.interaction-easing-spring-quick"
+msgstr "Spring: quick"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/interactions.cljs
+msgid "workspace.options.interaction-easing-spring-bouncy"
+msgstr "Spring: bouncy"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/interactions.cljs
+msgid "workspace.options.interaction-easing-spring-slow"
+msgstr "Spring: slow"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/interactions.cljs
+msgid "workspace.options.interaction-easing-custom-hint"
+msgstr "Four numbers, e.g. 0.25, 0.1, 0.25, 1 — or drag the handles"

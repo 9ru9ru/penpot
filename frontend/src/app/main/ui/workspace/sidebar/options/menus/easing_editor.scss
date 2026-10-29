@@ -1,0 +1,67 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+//
+// Copyright (c) KALEIDOS INC Sucursal en España SL
+
+@use "ds/typography.scss" as t;
+@use "ds/_borders.scss" as *;
+@use "ds/_sizes.scss" as *;
+
+.bezier-editor {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-s);
+  inline-size: 100%;
+}
+
+.bezier-box {
+  flex: none;
+  border-radius: $br-8;
+  background-color: var(--color-background-tertiary);
+  touch-action: none;
+}
+
+.bezier-area {
+  fill: none;
+  stroke: var(--color-background-quaternary);
+  stroke-dasharray: 2 2;
+}
+
+.bezier-arm {
+  stroke: var(--color-foreground-secondary);
+  stroke-width: 1;
+}
+
+.bezier-curve {
+  fill: none;
+  stroke: var(--color-accent-primary);
+  stroke-width: 2;
+}
+
+.bezier-handle {
+  fill: var(--color-background-primary);
+  stroke: var(--color-accent-primary);
+  stroke-width: 2;
+  cursor: grab;
+}
+
+.bezier-text {
+  @include t.use-typography("body-small");
+
+  flex: 1;
+  min-inline-size: 0;
+  block-size: $sz-32;
+  padding: 0 var(--sp-s);
+  border: $b-1 solid transparent;
+  border-radius: $br-8;
+  background-color: var(--input-background-color);
+  color: var(--input-foreground-color-active);
+  font-family: monospace;
+
+  &:focus {
+    outline: none;
+    border-color: var(--input-border-color-focus);
+  }
+}

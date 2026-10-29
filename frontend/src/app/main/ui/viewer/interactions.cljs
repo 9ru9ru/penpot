@@ -24,6 +24,7 @@
    [app.main.ui.viewer.viewport-common :as vpc]
    [app.main.ui.viewer.viewport-wasm :as viewport.wasm]
    [app.util.dom :as dom]
+   [app.util.easing :as ue]
    [app.util.i18n :as i18n :refer [tr]]
    [app.util.keyboard :as kbd]
    [goog.events :as events]
@@ -313,15 +314,15 @@
                       [#js {:opacity "100%"}
                        #js {:opacity "0%"}
                        #js {:opacity "0%"}]
-                      #js {:delay (/ (:duration animation) 3)
-                           :duration (/ (* 2 (:duration animation)) 3)
-                           :easing (name (:easing animation))})
+                      #js {:delay (/ (ue/duration animation) 3)
+                           :duration (/ (* 2 (ue/duration animation)) 3)
+                           :easing (ue/css-easing animation)})
         (dom/animate! current-viewport
                       [#js {:opacity "0%"}
                        #js {:opacity "100%"}
                        #js {:opacity "100%"}]
-                      #js {:duration (:duration animation)
-                           :easing (name (:easing animation))}
+                      #js {:duration (ue/duration animation)
+                           :easing (ue/css-easing animation)}
                       #(st/emit! (dv/complete-animation))))
 
     :slide
@@ -336,8 +337,8 @@
           (dom/animate! current-viewport
                         [#js {:left (str "-" offset "px")}
                          #js {:left "0"}]
-                        #js {:duration (:duration animation)
-                             :easing (name (:easing animation))}
+                        #js {:duration (ue/duration animation)
+                             :easing (ue/css-easing animation)}
                         #(st/emit! (dv/complete-animation)))
           (when (:offset-effect animation)
             (dom/animate! orig-viewport
@@ -345,8 +346,8 @@
                                 :opacity "100%"}
                            #js {:left (str (* offset 0.2) "px")
                                 :opacity "0"}]
-                          #js {:duration (:duration animation)
-                               :easing (name (:easing animation))})))
+                          #js {:duration (ue/duration animation)
+                               :easing (ue/css-easing animation)})))
 
         :left
         (let [offset (+ (:width current-size)
@@ -354,8 +355,8 @@
           (dom/animate! current-viewport
                         [#js {:right (str "-" offset "px")}
                          #js {:right "0"}]
-                        #js {:duration (:duration animation)
-                             :easing (name (:easing animation))}
+                        #js {:duration (ue/duration animation)
+                             :easing (ue/css-easing animation)}
                         #(st/emit! (dv/complete-animation)))
           (when (:offset-effect animation)
             (dom/animate! orig-viewport
@@ -363,8 +364,8 @@
                                 :opacity "100%"}
                            #js {:right (str (* offset 0.2) "px")
                                 :opacity "0"}]
-                          #js {:duration (:duration animation)
-                               :easing (name (:easing animation))})))
+                          #js {:duration (ue/duration animation)
+                               :easing (ue/css-easing animation)})))
 
         :up
         (let [offset (+ (:height current-size)
@@ -372,8 +373,8 @@
           (dom/animate! current-viewport
                         [#js {:bottom (str "-" offset "px")}
                          #js {:bottom "0"}]
-                        #js {:duration (:duration animation)
-                             :easing (name (:easing animation))}
+                        #js {:duration (ue/duration animation)
+                             :easing (ue/css-easing animation)}
                         #(st/emit! (dv/complete-animation)))
           (when (:offset-effect animation)
             (dom/animate! orig-viewport
@@ -381,8 +382,8 @@
                                 :opacity "100%"}
                            #js {:bottom (str (* offset 0.2) "px")
                                 :opacity "0"}]
-                          #js {:duration (:duration animation)
-                               :easing (name (:easing animation))})))
+                          #js {:duration (ue/duration animation)
+                               :easing (ue/css-easing animation)})))
 
         :down
         (let [offset (+ (:height current-size)
@@ -390,8 +391,8 @@
           (dom/animate! current-viewport
                         [#js {:top (str "-" offset "px")}
                          #js {:top "0"}]
-                        #js {:duration (:duration animation)
-                             :easing (name (:easing animation))}
+                        #js {:duration (ue/duration animation)
+                             :easing (ue/css-easing animation)}
                         #(st/emit! (dv/complete-animation)))
           (when (:offset-effect animation)
             (dom/animate! orig-viewport
@@ -399,8 +400,8 @@
                                 :opacity "100%"}
                            #js {:top (str (* offset 0.2) "px")
                                 :opacity "0"}]
-                          #js {:duration (:duration animation)
-                               :easing (name (:easing animation))}))))
+                          #js {:duration (ue/duration animation)
+                               :easing (ue/css-easing animation)}))))
 
       :out
       (case (:direction animation)
@@ -412,8 +413,8 @@
           (dom/animate! orig-viewport
                         [#js {:right "0"}
                          #js {:right (str "-" offset "px")}]
-                        #js {:duration (:duration animation)
-                             :easing (name (:easing animation))}
+                        #js {:duration (ue/duration animation)
+                             :easing (ue/css-easing animation)}
                         #(st/emit! (dv/complete-animation)))
           (when (:offset-effect animation)
             (dom/animate! current-viewport
@@ -421,8 +422,8 @@
                                 :opacity "0"}
                            #js {:right "0"
                                 :opacity "100%"}]
-                          #js {:duration (:duration animation)
-                               :easing (name (:easing animation))})))
+                          #js {:duration (ue/duration animation)
+                               :easing (ue/css-easing animation)})))
 
         :left
         (let [offset (+ (:width orig-size)
@@ -431,8 +432,8 @@
           (dom/animate! orig-viewport
                         [#js {:left "0"}
                          #js {:left (str "-" offset "px")}]
-                        #js {:duration (:duration animation)
-                             :easing (name (:easing animation))}
+                        #js {:duration (ue/duration animation)
+                             :easing (ue/css-easing animation)}
                         #(st/emit! (dv/complete-animation)))
           (when (:offset-effect animation)
             (dom/animate! current-viewport
@@ -440,8 +441,8 @@
                                 :opacity "0"}
                            #js {:left "0"
                                 :opacity "100%"}]
-                          #js {:duration (:duration animation)
-                               :easing (name (:easing animation))})))
+                          #js {:duration (ue/duration animation)
+                               :easing (ue/css-easing animation)})))
 
         :up
         (let [offset (+ (:height orig-size)
@@ -450,8 +451,8 @@
           (dom/animate! orig-viewport
                         [#js {:top "0"}
                          #js {:top (str "-" offset "px")}]
-                        #js {:duration (:duration animation)
-                             :easing (name (:easing animation))}
+                        #js {:duration (ue/duration animation)
+                             :easing (ue/css-easing animation)}
                         #(st/emit! (dv/complete-animation)))
           (when (:offset-effect animation)
             (dom/animate! current-viewport
@@ -459,8 +460,8 @@
                                 :opacity "0"}
                            #js {:top "0"
                                 :opacity "100%"}]
-                          #js {:duration (:duration animation)
-                               :easing (name (:easing animation))})))
+                          #js {:duration (ue/duration animation)
+                               :easing (ue/css-easing animation)})))
 
         :down
         (let [offset (+ (:height orig-size)
@@ -469,8 +470,8 @@
           (dom/animate! orig-viewport
                         [#js {:bottom "0"}
                          #js {:bottom (str "-" offset "px")}]
-                        #js {:duration (:duration animation)
-                             :easing (name (:easing animation))}
+                        #js {:duration (ue/duration animation)
+                             :easing (ue/css-easing animation)}
                         #(st/emit! (dv/complete-animation)))
           (when (:offset-effect animation)
             (dom/animate! current-viewport
@@ -478,8 +479,8 @@
                                 :opacity "0"}
                            #js {:bottom "0"
                                 :opacity "100%"}]
-                          #js {:duration (:duration animation)
-                               :easing (name (:easing animation))})))))
+                          #js {:duration (ue/duration animation)
+                               :easing (ue/css-easing animation)})))))
 
     :push
     (case (:direction animation)
@@ -489,56 +490,56 @@
         (dom/animate! current-viewport
                       [#js {:left (str "-" offset "px")}
                        #js {:left "0"}]
-                      #js {:duration (:duration animation)
-                           :easing (name (:easing animation))}
+                      #js {:duration (ue/duration animation)
+                           :easing (ue/css-easing animation)}
                       #(st/emit! (dv/complete-animation)))
         (dom/animate! orig-viewport
                       [#js {:left "0"}
                        #js {:left (str offset "px")}]
-                      #js {:duration (:duration animation)
-                           :easing (name (:easing animation))}))
+                      #js {:duration (ue/duration animation)
+                           :easing (ue/css-easing animation)}))
 
       :left
       (let [offset (:width wrapper-size)]
         (dom/animate! current-viewport
                       [#js {:right (str "-" offset "px")}
                        #js {:right "0"}]
-                      #js {:duration (:duration animation)
-                           :easing (name (:easing animation))}
+                      #js {:duration (ue/duration animation)
+                           :easing (ue/css-easing animation)}
                       #(st/emit! (dv/complete-animation)))
         (dom/animate! orig-viewport
                       [#js {:right "0"}
                        #js {:right (str offset "px")}]
-                      #js {:duration (:duration animation)
-                           :easing (name (:easing animation))}))
+                      #js {:duration (ue/duration animation)
+                           :easing (ue/css-easing animation)}))
 
       :up
       (let [offset (:height wrapper-size)]
         (dom/animate! current-viewport
                       [#js {:bottom (str "-" offset "px")}
                        #js {:bottom "0"}]
-                      #js {:duration (:duration animation)
-                           :easing (name (:easing animation))}
+                      #js {:duration (ue/duration animation)
+                           :easing (ue/css-easing animation)}
                       #(st/emit! (dv/complete-animation)))
         (dom/animate! orig-viewport
                       [#js {:bottom "0"}
                        #js {:bottom (str offset "px")}]
-                      #js {:duration (:duration animation)
-                           :easing (name (:easing animation))}))
+                      #js {:duration (ue/duration animation)
+                           :easing (ue/css-easing animation)}))
 
       :down
       (let [offset (:height wrapper-size)]
         (dom/animate! current-viewport
                       [#js {:top (str "-" offset "px")}
                        #js {:top "0"}]
-                      #js {:duration (:duration animation)
-                           :easing (name (:easing animation))}
+                      #js {:duration (ue/duration animation)
+                           :easing (ue/css-easing animation)}
                       #(st/emit! (dv/complete-animation)))
         (dom/animate! orig-viewport
                       [#js {:top "0"}
                        #js {:top (str offset "px")}]
-                      #js {:duration (:duration animation)
-                           :easing (name (:easing animation))})))))
+                      #js {:duration (ue/duration animation)
+                           :easing (ue/css-easing animation)})))))
 
 (defn animate-open-overlay
   [animation overlay-viewport
@@ -550,8 +551,8 @@
       (dom/animate! overlay-viewport
                     [#js {:opacity "0"}
                      #js {:opacity "100"}]
-                    #js {:duration (:duration animation)
-                         :easing (name (:easing animation))}
+                    #js {:duration (ue/duration animation)
+                         :easing (ue/css-easing animation)}
                     #(st/emit! (dv/complete-animation)))
 
       :slide
@@ -561,32 +562,32 @@
         (dom/animate! overlay-viewport
                       [#js {:left (str "-" (:width overlay-size) "px")}
                        #js {:left (str (:x overlay-position) "px")}]
-                      #js {:duration (:duration animation)
-                           :easing (name (:easing animation))}
+                      #js {:duration (ue/duration animation)
+                           :easing (ue/css-easing animation)}
                       #(st/emit! (dv/complete-animation)))
 
         :left
         (dom/animate! overlay-viewport
                       [#js {:left (str (:width wrapper-size) "px")}
                        #js {:left (str (:x overlay-position) "px")}]
-                      #js {:duration (:duration animation)
-                           :easing (name (:easing animation))}
+                      #js {:duration (ue/duration animation)
+                           :easing (ue/css-easing animation)}
                       #(st/emit! (dv/complete-animation)))
 
         :up
         (dom/animate! overlay-viewport
                       [#js {:top (str (:height wrapper-size) "px")}
                        #js {:top (str (:y overlay-position) "px")}]
-                      #js {:duration (:duration animation)
-                           :easing (name (:easing animation))}
+                      #js {:duration (ue/duration animation)
+                           :easing (ue/css-easing animation)}
                       #(st/emit! (dv/complete-animation)))
 
         :down
         (dom/animate! overlay-viewport
                       [#js {:top (str "-" (:height overlay-size) "px")}
                        #js {:top (str (:y overlay-position) "px")}]
-                      #js {:duration (:duration animation)
-                           :easing (name (:easing animation))}
+                      #js {:duration (ue/duration animation)
+                           :easing (ue/css-easing animation)}
                       #(st/emit! (dv/complete-animation)))))))
 
 (defn animate-close-overlay
@@ -599,8 +600,8 @@
       (dom/animate! overlay-viewport
                     [#js {:opacity "100"}
                      #js {:opacity "0"}]
-                    #js {:duration (:duration animation)
-                         :easing (name (:easing animation))}
+                    #js {:duration (ue/duration animation)
+                         :easing (ue/css-easing animation)}
                     #(st/emit! (dv/complete-animation)
                                (dv/close-overlay overlay-id)))
 
@@ -611,8 +612,8 @@
         (dom/animate! overlay-viewport
                       [#js {:left (str (:x overlay-position) "px")}
                        #js {:left (str (:width wrapper-size) "px")}]
-                      #js {:duration (:duration animation)
-                           :easing (name (:easing animation))}
+                      #js {:duration (ue/duration animation)
+                           :easing (ue/css-easing animation)}
                       #(st/emit! (dv/complete-animation)
                                  (dv/close-overlay overlay-id)))
 
@@ -620,8 +621,8 @@
         (dom/animate! overlay-viewport
                       [#js {:left (str (:x overlay-position) "px")}
                        #js {:left (str "-" (:width overlay-size) "px")}]
-                      #js {:duration (:duration animation)
-                           :easing (name (:easing animation))}
+                      #js {:duration (ue/duration animation)
+                           :easing (ue/css-easing animation)}
                       #(st/emit! (dv/complete-animation)
                                  (dv/close-overlay overlay-id)))
 
@@ -629,8 +630,8 @@
         (dom/animate! overlay-viewport
                       [#js {:top (str (:y overlay-position) "px")}
                        #js {:top (str "-" (:height overlay-size) "px")}]
-                      #js {:duration (:duration animation)
-                           :easing (name (:easing animation))}
+                      #js {:duration (ue/duration animation)
+                           :easing (ue/css-easing animation)}
                       #(st/emit! (dv/complete-animation)
                                  (dv/close-overlay overlay-id)))
 
@@ -638,8 +639,8 @@
         (dom/animate! overlay-viewport
                       [#js {:top (str (:y overlay-position) "px")}
                        #js {:top (str (:height wrapper-size) "px")}]
-                      #js {:duration (:duration animation)
-                           :easing (name (:easing animation))}
+                      #js {:duration (ue/duration animation)
+                           :easing (ue/css-easing animation)}
                       #(st/emit! (dv/complete-animation)
                                  (dv/close-overlay overlay-id)))))))
 

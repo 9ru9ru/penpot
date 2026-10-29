@@ -10,6 +10,7 @@
    [app.common.files.helpers :as cfh]
    [app.common.geom.point :as gpt]
    [app.common.geom.shapes.bounds :as gsb]
+   [app.common.math :as mth]
    [app.common.schema :as sm]
    [app.common.schema.generators :as sg]))
 
@@ -58,7 +59,62 @@
     :ease
     :ease-in
     :ease-out
-    :ease-in-out})
+    :ease-in-out
+    :ease-in-back
+    :ease-out-back
+    :ease-in-out-back
+    :custom-bezier
+    :spring-gentle
+    :spring-quick
+    :spring-bouncy
+    :spring-slow})
+
+(def easing-beziers
+  "Control points of the bezier easings. `:custom-bezier` reads its own
+  from the animation's `:easing-bezier`."
+  {:linear           [0 0 1 1]
+   :ease             [0.25 0.1 0.25 1]
+   :ease-in          [0.42 0 1 1]
+   :ease-out         [0 0 0.58 1]
+   :ease-in-out      [0.42 0 0.58 1]
+   :ease-in-back     [0.3 -0.05 0.7 -0.5]
+   :ease-out-back    [0.45 1.45 0.8 1]
+   :ease-in-out-back [0.7 -0.4 0.4 1.4]})
+
+(def default-custom-bezier [0.25 0.1 0.25 1])
+
+(def springs
+  "Spring presets (mass, stiffness, damping), as in Figma."
+  {:spring-gentle {:mass 1 :stiffness 100 :damping 15}
+   :spring-quick  {:mass 1 :stiffness 300 :damping 20}
+   :spring-bouncy {:mass 1 :stiffness 600 :damping 15}
+   :spring-slow   {:mass 1 :stiffness 80 :damping 20}})
+
+(defn spring?
+  [easing]
+  (contains? springs easing))
+
+(def ^:private spring-step-ms 4)
+
+(defn spring-samples
+  "Position samples (0 to ~1) of a spring released from 0 towards 1, one
+  every few milliseconds until it settles. Returns [samples duration-ms]."
+  [{:keys [mass stiffness damping]}]
+  (let [dt (/ spring-step-ms 1000)]
+    (loop [x 0.0 v 0.0 t 0 still 0 acc (transient [0.0])]
+      (let [a  (/ (- (* (- stiffness) (- x 1)) (* damping v)) mass)
+            v' (+ v (* a dt))
+            x' (+ x (* v' dt))
+            t' (+ t spring-step-ms)
+            settled? (and (< (mth/abs (- x' 1)) 0.001) (< (mth/abs v') 0.01))
+            still'   (if settled? (+ still spring-step-ms) 0)]
+        (if (or (>= still' 50) (> t' 10000))
+          [(persistent! (conj! acc 1.0)) t']
+          (recur x' v' t' still' (conj! acc x')))))))
+
+(defn spring-duration
+  [easing]
+  (some-> (get springs easing) spring-samples second))
 
 (def direction-types
   #{:right
@@ -77,6 +133,7 @@
    [:animation-type [:= :dissolve]]
    [:duration ::sm/safe-int]
    [:easing [::sm/one-of easing-types]]
+   [:easing-bezier {:optional true} [:vector {:min 4 :max 4} ::sm/safe-number]]
    [:way {:optional true} [::sm/one-of way-types]]
    [:offset-effect {:optional true} :boolean]
    [:direction {:optional true} [::sm/one-of direction-types]]])
@@ -86,6 +143,7 @@
    [:animation-type [:= :slide]]
    [:duration ::sm/safe-int]
    [:easing [::sm/one-of easing-types]]
+   [:easing-bezier {:optional true} [:vector {:min 4 :max 4} ::sm/safe-number]]
    [:way [::sm/one-of way-types]]
    [:direction [::sm/one-of direction-types]]
    [:offset-effect :boolean]])
@@ -95,6 +153,7 @@
    [:animation-type [:= :push]]
    [:duration ::sm/safe-int]
    [:easing [::sm/one-of easing-types]]
+   [:easing-bezier {:optional true} [:vector {:min 4 :max 4} ::sm/safe-number]]
    [:direction [::sm/one-of direction-types]]])
 
 (def schema:animation
@@ -623,7 +682,17 @@
   (assert (has-easing? interaction)
           "expected compatible interaction map")
 
-  (update interaction :animation assoc :easing easing))
+  (update interaction :animation
+          (fn [animation]
+            (cond-> (assoc animation :easing easing)
+              (and (= :custom-bezier easing) (nil? (:easing-bezier animation)))
+              (assoc :easing-bezier (get easing-beziers (:easing animation) default-custom-bezier))))))
+
+(defn set-easing-bezier
+  [interaction bezier]
+  (assert (has-easing? interaction)
+          "expected compatible interaction map")
+  (update interaction :animation assoc :easing :custom-bezier :easing-bezier (vec bezier)))
 
 (defn has-way?
   [interaction]
