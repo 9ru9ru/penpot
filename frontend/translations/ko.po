@@ -8560,3 +8560,11 @@ msgstr "레이어 모두 접기"
 #: src/app/main/ui/comments.cljs
 msgid "comments.add-reaction"
 msgstr "반응 추가"
+
+#: src/app/main/ui/workspace/libraries.cljs
+msgid "workspace.libraries.update-only-this"
+msgstr "이 항목만 업데이트합니다. 나머지는 그대로 둡니다"
+
+#: src/app/main/ui/workspace/libraries.cljs
+msgid "workspace.libraries.update-only-this.short"
+msgstr "이것만"

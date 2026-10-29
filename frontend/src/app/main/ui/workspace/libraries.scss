@@ -176,7 +176,7 @@
   @include t.use-typography("body-large");
 
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: auto 1fr auto;
   align-items: start;
   gap: var(--sp-s);
   color: var(--library-content-foreground-color);
@@ -402,4 +402,22 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.asset-update {
+  @include t.use-typography("body-small");
+
+  align-self: center;
+  padding: var(--sp-xxs) var(--sp-s);
+  border: $b-1 solid var(--color-background-quaternary);
+  border-radius: $br-6;
+  background: none;
+  color: var(--color-foreground-secondary);
+  white-space: nowrap;
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--color-accent-primary);
+    color: var(--color-accent-primary);
+  }
 }

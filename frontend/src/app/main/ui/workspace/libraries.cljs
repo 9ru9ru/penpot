@@ -9,7 +9,9 @@
   (:require
    [app.common.data :as d]
    [app.common.data.macros :as dm]
+   [app.common.files.changes-builder :as pcb]
    [app.common.files.variant :as cfv]
+   [app.common.logic.libraries :as cll]
    [app.common.types.components-list :as ctkl]
    [app.common.types.file :as ctf]
    [app.common.types.library :as ctl]
@@ -18,6 +20,7 @@
    [app.common.uuid :as uuid]
    [app.config :as cf]
    [app.main.data.dashboard :as dd]
+   [app.main.data.helpers :as dsh]
    [app.main.data.modal :as modal]
    [app.main.data.notifications :as ntf]
    [app.main.data.profile :as du]
@@ -44,6 +47,7 @@
    [app.util.dom :as dom]
    [app.util.i18n :refer [c tr]]
    [app.util.strings :refer [matches-search]]
+   [app.util.timers :as ts]
    [beicon.v2.core :as rx]
    [cuerdas.core :as str]
    [rumext.v2 :as mf]))
@@ -439,8 +443,21 @@
              :else
              (tr "workspace.libraries.no-matches-for" search-term))]))]]))
 
+(def ^:private asset-sync-type
+  {:component :components :color :colors :typography :typographies})
+
+(defn- asset-pending?
+  "Whether syncing this one asset would still change the file; assets
+  updated one by one stay newer than the file's sync date, so the date
+  alone would keep listing them."
+  [file-id library-id libraries {:keys [asset-type asset-id]}]
+  (seq (:redo-changes
+        (cll/generate-sync-file-changes
+         (pcb/empty-changes) nil (asset-sync-type asset-type)
+         file-id asset-id library-id libraries file-id true))))
+
 (defn- extract-assets
-  [file-data library summary?]
+  [file-data library summary? file-id libraries]
   (let [exceeded (volatile! {:components false
                              :colors false
                              :typographies false})
@@ -452,7 +469,8 @@
                        (take 5 items))
                      items))
 
-        assets (dwl/assets-need-sync library file-data)
+        assets (->> (dwl/assets-need-sync library file-data)
+                    (filter (partial asset-pending? file-id (:id library) libraries)))
 
         component-ids  (into #{} (->> assets
                                       (filter #(= (:asset-type %) :component))
@@ -481,6 +499,14 @@
                         :colors colors
                         :typographies typographies}]))
 
+(mf/defc asset-update-button*
+  {::mf/private true}
+  [{:keys [on-click]}]
+  [:button {:class (stl/css :asset-update)
+            :title (tr "workspace.libraries.update-only-this")
+            :on-click on-click}
+   (tr "workspace.libraries.update-only-this.short")])
+
 (mf/defc updates-tab*
   {::mf/private true}
   [{:keys [file-id libraries]}]
@@ -498,9 +524,13 @@
          (fn []
            (reset! summary?* false)))
 
-        libs-assets (mf/with-memo [file-data libraries summary?*]
+        refresh*   (mf/use-state 0)
+
+        all-libraries (dsh/lookup-libraries @st/state)
+
+        libs-assets (mf/with-memo [file-data libraries summary?* @refresh*]
                       (->> (vals libraries)
-                           (map #(extract-assets file-data % summary?))
+                           (map #(extract-assets file-data % summary? file-id all-libraries))
                            (filter (fn [[_ _ {:keys [components colors typographies]}]]
                                      (or (seq components)
                                          (seq colors)
@@ -516,7 +546,15 @@
                               (when library-id
                                 (st/emit!
                                  (dwl/set-updating-library true)
-                                 (dwl/sync-file file-id library-id)))))))]
+                                 (dwl/sync-file file-id library-id)))))))
+
+        update-asset
+        (mf/use-fn
+         (mf/deps file-id)
+         (fn [library-id asset-type asset-id]
+           (st/emit! (dwl/sync-file file-id library-id (asset-sync-type asset-type) asset-id))
+           ;; Let the changes land before listing what is still pending.
+           (ts/schedule 600 #(swap! refresh* inc))))]
 
     [:div {:class (stl/css :updates-content)}
      [:div {:class (stl/css :update-section)}
@@ -562,7 +600,8 @@
                        [:div {:class (stl/css :name-block)}
                         [:span {:class (stl/css :item-name)
                                 :title (:name component)}
-                         (:name component)]]])])
+                         (:name component)]]
+                       [:> asset-update-button* {:on-click #(update-asset id :component (:id component))}]])])
                  (when (:components exceeded)
                    [:div {:class (stl/css :libraries-updates-item)
                           :key (uuid/next)}
@@ -588,7 +627,8 @@
                                 :title (:name color)}
                          (:name color)]
                         (when-not (= (:name color) default-name)
-                          [:span.color-value (:color color)])]]]))
+                          [:span.color-value (:color color)])]
+                       [:> asset-update-button* {:on-click #(update-asset id :color (:id color))}]]]))
                  (when (:colors exceeded)
                    [:div {:class (stl/css :libraries-updates-item)
                           :key (uuid/next)}
@@ -608,7 +648,8 @@
                      [:div {:class (stl/css :name-block)}
                       [:span {:class (stl/css :item-name)
                               :title (:name typography)}
-                       (:name typography)]]]])
+                       (:name typography)]]
+                     [:> asset-update-button* {:on-click #(update-asset id :typography (:id typography))}]]])
                  (when (:typographies exceeded)
                    [:div {:class (stl/css :libraries-updates-item)
                           :key (uuid/next)}

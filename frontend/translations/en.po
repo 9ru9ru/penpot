@@ -10657,3 +10657,11 @@ msgstr "Collapse all layers"
 #: src/app/main/ui/comments.cljs
 msgid "comments.add-reaction"
 msgstr "Add reaction"
+
+#: src/app/main/ui/workspace/libraries.cljs
+msgid "workspace.libraries.update-only-this"
+msgstr "Update only this asset; the rest stay as they are"
+
+#: src/app/main/ui/workspace/libraries.cljs
+msgid "workspace.libraries.update-only-this.short"
+msgstr "Update"
