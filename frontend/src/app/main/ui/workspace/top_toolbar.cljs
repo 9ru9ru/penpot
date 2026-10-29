@@ -54,7 +54,9 @@
             :tools {:rect {:icon i/rectangle}
                     :circle {:icon i/ellipse}
                     :line {:icon i/easing-linear}
-                    :arrow {:icon i/stroke-arrow}}}
+                    :arrow {:icon i/stroke-arrow}
+                    :polygon {:icon i/polygon}
+                    :star {:icon i/star}}}
    :free-draw {:default-tool :path
                :tools {:path {:icon i/path}
                        :curve {:icon i/curve}}}})
@@ -68,6 +70,8 @@
     :circle  (tr "workspace.toolbar.ellipse" (sc/get-tooltip :draw-ellipse))
     :line    (tr "workspace.toolbar.line"    (sc/get-tooltip :draw-line))
     :arrow   (tr "workspace.toolbar.arrow"   (sc/get-tooltip :draw-arrow))
+    :polygon (tr "workspace.toolbar.polygon")
+    :star    (tr "workspace.toolbar.star")
     :text    (tr "workspace.toolbar.text"    (sc/get-tooltip :draw-text))
     :path    (tr "workspace.toolbar.path"    (sc/get-tooltip :draw-path))
     :image   (tr "workspace.toolbar.image"   (sc/get-tooltip :insert-image))

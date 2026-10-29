@@ -58,9 +58,11 @@
       :circle (if (cts/has-images? shape)
                 "img"
                 "ellipse")
-      :path (if (cts/has-images? shape)
-              "img"
-              "path")
+      :path (cond
+              (cts/has-images? shape) "img"
+              (= :star (dm/get-in shape [:polygon :kind])) "star"
+              (:polygon shape) "polygon"
+              :else "path")
       :rect (if (cts/has-images? shape)
               "img"
               "rectangle")

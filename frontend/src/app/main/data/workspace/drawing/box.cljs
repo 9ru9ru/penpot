@@ -16,6 +16,7 @@
    [app.common.math :as mth]
    [app.common.types.container :as ctn]
    [app.common.types.modifiers :as ctm]
+   [app.common.types.polygon :as ctpo]
    [app.common.types.shape :as cts]
    [app.common.types.shape-tree :as ctst]
    [app.common.types.shape.layout :as ctl]
@@ -79,14 +80,56 @@
                                    (ctm/move movev)))))
     shape))
 
+(def ^:private polygon-names
+  {:polygon "Polygon" :star "Star"})
+
+(defn- polygon-object
+  "A polygon or star is drawn as a box (kept in ::box) and shown as the
+  path that fills it."
+  [box params]
+  (-> box
+      (dissoc :r1 :r2 :r3 :r4)
+      (assoc :type :path
+             :name (get polygon-names (:kind params))
+             ::box box
+             ::polygon params)
+      (merge (ctpo/shape-in-rect params (:selrect box)))))
+
+(defn- update-box
+  "Applies `f` to the drawing box, of a polygon too."
+  [shape f & args]
+  (if-let [params (::polygon shape)]
+    (polygon-object (apply f (::box shape) args) params)
+    (apply f shape args)))
+
 (defn- update-drawing
   [state initial point lock? mod? snap-pixel?]
-  (update-in state [:workspace-drawing :object] resize-shape initial point lock? mod? snap-pixel?))
+  (update-in state [:workspace-drawing :object] update-box resize-shape initial point lock? mod? snap-pixel?))
 
 (defn move-drawing
   [{:keys [x y]}]
   (fn [state]
-    (update-in state [:workspace-drawing :object] gsh/absolute-move (gpt/point x y))))
+    (update-in state [:workspace-drawing :object] update-box gsh/absolute-move (gpt/point x y))))
+
+(defn- finish-polygon
+  "A click without a drag makes a 100×100 polygon centred on it."
+  []
+  (ptk/reify ::finish-polygon
+    ptk/UpdateEvent
+    (update [_ state]
+      (update-in state [:workspace-drawing :object]
+                 (fn [{:keys [::box ::polygon] :as shape}]
+                   (if polygon
+                     (let [box (if (:click-draw? box)
+                                 (-> box
+                                     (assoc :width 100 :height 100 :selrect nil :points nil)
+                                     (cts/setup-shape)
+                                     (gsh/transform-shape (ctm/move-modifiers -50 -50)))
+                                 box)]
+                       (-> (polygon-object box polygon)
+                           (dissoc ::box ::polygon)
+                           (assoc :click-draw? false)))
+                     shape))))))
 
 (defn handle-drawing
   [type]
@@ -114,7 +157,9 @@
             drop-index   (when flex-layout? (gslf/get-drop-index fid objects initial))
             drop-cell    (when grid-layout? (gslg/get-drop-cell fid objects initial))
 
-            shape        (-> (cts/setup-shape {:type type
+            polygon      (get ctpo/defaults type)
+
+            shape        (-> (cts/setup-shape {:type (if polygon :rect type)
                                                :x (:x initial)
                                                :y (:y initial)
                                                :frame-id fid
@@ -122,6 +167,8 @@
                                                :initialized? true
                                                :click-draw? true
                                                :hide-in-viewer (and (= type :frame) (not= fid uuid/zero))})
+                             (cond-> (some? polygon)
+                               (polygon-object polygon))
                              (cond-> (some? drop-index)
                                (with-meta {:index drop-index}))
                              (cond-> (some? drop-cell)
@@ -149,5 +196,6 @@
                      (fn [[_ shift? mod? point]]
                        #(update-drawing % initial (cond-> point snap-pixel? (gpt/round-step 1)) shift? mod? snap-pixel?))))))
 
-         (->> (rx/of (common/handle-finish-drawing))
+         (->> (rx/of (finish-polygon)
+                     (common/handle-finish-drawing))
               (rx/delay 100)))))))

@@ -10390,3 +10390,27 @@ msgstr "다시 시도"
 
 msgid "dashboard.invite-profile-disabled"
 msgstr "이 팀에 사람을 초대할 권한이 없습니다"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/polygon.cljs
+msgid "workspace.toolbar.polygon"
+msgstr "다각형"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/polygon.cljs
+msgid "workspace.toolbar.star"
+msgstr "별"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/polygon.cljs
+msgid "workspace.options.polygon.polygon"
+msgstr "다각형"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/polygon.cljs
+msgid "workspace.options.polygon.star"
+msgstr "별"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/polygon.cljs
+msgid "workspace.options.polygon.count"
+msgstr "꼭짓점 수"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/polygon.cljs
+msgid "workspace.options.polygon.ratio"
+msgstr "별 안쪽 비율 (%)"

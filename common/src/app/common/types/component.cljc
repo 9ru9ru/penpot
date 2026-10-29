@@ -51,6 +51,7 @@
    :hide-fill-on-export     :fill-group
    :content                 {:path :geometry-group
                              :text :content-group}
+   :polygon                 :geometry-group
    :position-data           :content-group
    :hidden                  :visibility-group
    :blocked                 :modifiable-group

@@ -55,6 +55,9 @@
                              (fn [shape]
                                (-> shape
                                    (assoc :content new-content)
+                                   ;; Once its nodes are edited a polygon
+                                   ;; is an ordinary path.
+                                   (dissoc :polygon)
                                    (path/update-geometry))))
           (pcb/resize-parents [shape-id])))))
 

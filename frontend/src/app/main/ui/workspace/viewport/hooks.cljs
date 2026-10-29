@@ -112,6 +112,7 @@
              (= drawing-tool :frame)         (utils/get-cursor :create-artboard)
              (= drawing-tool :rect)          (utils/get-cursor :create-rectangle)
              (= drawing-tool :circle)        (utils/get-cursor :create-ellipse)
+             (#{:polygon :star} drawing-tool) (utils/get-cursor :create-polygon)
              (and show-zoom? (not @alt?))    (utils/get-cursor :zoom-in)
              (and show-zoom? @alt?)          (utils/get-cursor :zoom-out)
              show-pen?                       (utils/get-cursor :pen)

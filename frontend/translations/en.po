@@ -10693,3 +10693,27 @@ msgstr "Tidy up (%s)"
 #: src/app/main/ui/workspace/sidebar/options/menus/align.cljs
 msgid "shortcuts.tidy-up"
 msgstr "Tidy up"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/polygon.cljs
+msgid "workspace.toolbar.polygon"
+msgstr "Polygon"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/polygon.cljs
+msgid "workspace.toolbar.star"
+msgstr "Star"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/polygon.cljs
+msgid "workspace.options.polygon.polygon"
+msgstr "Polygon"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/polygon.cljs
+msgid "workspace.options.polygon.star"
+msgstr "Star"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/polygon.cljs
+msgid "workspace.options.polygon.count"
+msgstr "Number of points"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/polygon.cljs
+msgid "workspace.options.polygon.ratio"
+msgstr "Star ratio (%)"
