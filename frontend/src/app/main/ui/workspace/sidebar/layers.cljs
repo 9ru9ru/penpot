@@ -13,6 +13,7 @@
    [app.common.types.shape :as cts]
    [app.common.uuid :as uuid]
    [app.main.data.workspace :as dw]
+   [app.main.data.workspace.collapse :as dwc]
    [app.main.data.workspace.find-replace :as dwfr]
    [app.main.data.workspace.texts :as dwt]
    [app.main.refs :as refs]
@@ -369,6 +370,9 @@
          (fn []
            (let [mode (if find-replace-mode? :find :find-and-replace)]
              (st/emit! (dw/open-layers-search mode {:force? true})))))
+
+        collapse-all
+        (mf/use-fn #(st/emit! (dwc/collapse-all)))
 
         toggle-search
         (mf/use-fn
@@ -787,7 +791,12 @@
                           :title        (:name page)
                           :on-btn-click toggle-search
                           :btn-icon     "search"
-                          :btn-title    (tr "labels.search")}]]))]))
+                          :btn-title    (tr "labels.search")}
+           [:> icon-button* {:variant "ghost"
+                             :class (stl/css :collapse-all-button)
+                             :aria-label (tr "workspace.sidebar.layers.collapse-all")
+                             :on-click collapse-all
+                             :icon i/hug-content}]]]))]))
 
 (defn- on-scroll
   [event]
