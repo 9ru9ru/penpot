@@ -441,6 +441,20 @@
                (rx/catch #(rx/throw {:type :comment-error}))))))))
 
 
+(defn toggle-reaction
+  "Adds or removes the current profile's `emoji` reaction to a comment."
+  [{:keys [id thread-id]} emoji]
+  (ptk/reify ::toggle-reaction
+    ptk/WatchEvent
+    (watch [_ state _]
+      (let [share-id (-> state :viewer-local :share-id)]
+        (->> (rp/cmd! :toggle-comment-reaction {:comment-id id :emoji emoji :share-id share-id})
+             (rx/map (fn [reactions]
+                       #(cond-> %
+                          (some? (dm/get-in % [:comments thread-id id]))
+                          (assoc-in [:comments thread-id id :reactions] reactions))))
+             (rx/catch #(rx/throw {:type :comment-error})))))))
+
 (defn retrieve-unread-comment-threads
   "A event used mainly in dashboard for retrieve all unread threads of a team."
   [team-id]

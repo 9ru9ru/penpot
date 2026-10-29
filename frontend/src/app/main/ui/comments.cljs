@@ -940,6 +940,53 @@
              :on-click on-delete-thread}
         (tr "labels.delete-comment-thread")]]]]))
 
+(def ^:private quick-reactions
+  ["👍" "❤️" "😂" "🎉" "👀" "🙏" "✅" "🔥"])
+
+(mf/defc comment-reactions*
+  "Emoji reactions under a comment: one chip per emoji, highlighted when
+  it is ours, and a button to add one."
+  {::mf/private true}
+  [{:keys [comment]}]
+  (let [profile   (mf/deref refs/profile)
+        profiles  (mf/deref refs/profiles)
+        picker*   (mf/use-state false)
+        reactions (:reactions comment)
+
+        on-toggle
+        (mf/use-fn
+         (mf/deps comment)
+         (fn [emoji]
+           (reset! picker* false)
+           (st/emit! (dcm/toggle-reaction comment emoji))))]
+
+    [:div {:class (stl/css :reactions)}
+     (for [{:keys [emoji profile-ids]} reactions]
+       (let [mine? (some #(= (:id profile) %) profile-ids)
+             names (->> profile-ids
+                        (keep #(:fullname (get profiles %)))
+                        (str/join ", "))]
+         [:button {:key emoji
+                   :class (stl/css-case :reaction true :reaction-mine mine?)
+                   :title names
+                   :on-click #(on-toggle emoji)}
+          [:span {:class (stl/css :reaction-emoji)} emoji]
+          [:span {:class (stl/css :reaction-count)} (count profile-ids)]]))
+
+     [:div {:class (stl/css :reaction-add-wrapper)}
+      [:button {:class (stl/css :reaction-add)
+                :aria-label (tr "comments.add-reaction")
+                :title (tr "comments.add-reaction")
+                :on-click #(swap! picker* not)}
+       "☺+"]
+      (when @picker*
+        [:div {:class (stl/css :reaction-picker)}
+         (for [emoji quick-reactions]
+           [:button {:key emoji
+                     :class (stl/css :reaction-pick)
+                     :on-click #(on-toggle emoji)}
+            emoji])])]]))
+
 (mf/defc comment-floating-thread-item*
   {::mf/private true}
   [{:keys [comment thread]}]
@@ -1005,7 +1052,9 @@
                                  :on-submit on-submit
                                  :on-cancel on-cancel}]
          [:span {:class (stl/css :text)}
-          [:> comment-content* {:content (:content comment)}]])]]
+          [:> comment-content* {:content (:content comment)}]])]
+
+      [:> comment-reactions* {:comment comment}]]
 
      [:& dropdown {:show (= options (:id comment))
                    :on-close on-hide-options}

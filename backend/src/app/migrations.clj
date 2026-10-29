@@ -511,7 +511,12 @@
     :fn (mg/resource "app/migrations/sql/0155-add-idx-to-file-change.sql")}
 
    {:name "0156-reset-pg-storage-defaults"
-    :fn (mg/resource "app/migrations/sql/0156-reset-pg-storage-defaults.sql")}])
+    :fn (mg/resource "app/migrations/sql/0156-reset-pg-storage-defaults.sql")}
+
+   ;; penpot-ko fork migrations: named apart from upstream's numbering so a
+   ;; later upstream migration can never collide with them.
+   {:name "penpot-ko-0001-add-comment-reaction-table"
+    :fn (mg/resource "app/migrations/sql/penpot-ko-0001-add-comment-reaction-table.sql")}])
 
 (defn apply-migrations!
   [pool name migrations]

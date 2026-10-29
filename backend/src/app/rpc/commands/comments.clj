@@ -378,10 +378,36 @@
     WHERE c.thread_id = ?
     ORDER BY c.created_at ASC")
 
+(def ^:private sql:get-comment-reactions
+  "SELECT comment_id, emoji, profile_id
+     FROM comment_reaction
+    WHERE comment_id = ANY(?)
+    ORDER BY created_at ASC")
+
+(defn- get-reactions
+  "The reactions of each comment id, as {comment-id [{:emoji :profile-ids}]},
+  emojis in the order they were first used."
+  [conn comment-ids]
+  (if (empty? comment-ids)
+    {}
+    (->> (db/exec! conn [sql:get-comment-reactions
+                         (db/create-array conn "uuid" (vec comment-ids))])
+         (reduce (fn [acc {:keys [comment-id emoji profile-id]}]
+                   (update acc comment-id
+                           (fn [reactions]
+                             (let [reactions (or reactions [])
+                                   index     (d/index-of-pred reactions #(= emoji (:emoji %)))]
+                               (if (some? index)
+                                 (update-in reactions [index :profile-ids] conj profile-id)
+                                 (conj reactions {:emoji emoji :profile-ids [profile-id]}))))))
+                 {}))))
+
 (defn- get-comments
   [conn thread-id]
-  (->> (db/exec! conn [sql:get-comments thread-id])
-       (into [] xf-decode-row)))
+  (let [comments  (->> (db/exec! conn [sql:get-comments thread-id])
+                       (into [] xf-decode-row))
+        reactions (get-reactions conn (map :id comments))]
+    (mapv #(assoc % :reactions (get reactions (:id %) [])) comments)))
 
 ;; --- COMMAND: Get file comments users
 
@@ -699,6 +725,33 @@
                   {:id thread-id}
                   {::db/return-keys false})
       nil)))
+
+;; --- COMMAND: Toggle a reaction (penpot-ko)
+
+(def ^:private
+  schema:toggle-comment-reaction
+  [:map {:title "toggle-comment-reaction"}
+   [:comment-id ::sm/uuid]
+   [:emoji [:string {:min 1 :max 16}]]
+   [:share-id {:optional true} [:maybe ::sm/uuid]]])
+
+(sv/defmethod ::toggle-comment-reaction
+  "Adds the profile's `emoji` reaction to a comment, or removes it if it
+  is already there. Returns the comment's reactions."
+  {::doc/added "2.18"
+   ::sm/params schema:toggle-comment-reaction
+   ::db/transaction true}
+  [{:keys [::db/conn] :as cfg} {:keys [::rpc/profile-id comment-id emoji share-id]}]
+  (let [{:keys [thread-id]} (get-comment conn comment-id)
+        {:keys [file-id]}   (get-comment-thread conn thread-id)
+        params              {:comment-id comment-id
+                             :profile-id profile-id
+                             :emoji emoji}]
+    (files/check-comment-permissions! cfg profile-id file-id share-id)
+    (if (db/get* conn :comment-reaction params)
+      (db/delete! conn :comment-reaction params)
+      (db/insert! conn :comment-reaction params))
+    (get (get-reactions conn [comment-id]) comment-id [])))
 
 ;; --- COMMAND: Delete Comment Thread
 

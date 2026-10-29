@@ -8552,3 +8552,11 @@ msgstr "선택한 것을 내용까지 함께 배율로 조절합니다 (K로 끄
 #: src/app/main/ui/workspace/sidebar/options/menus/measures.cljs
 msgid "workspace.options.scale.anchor"
 msgstr "기준점"
+
+#: src/app/main/ui/workspace/sidebar/layers.cljs
+msgid "workspace.sidebar.layers.collapse-all"
+msgstr "레이어 모두 접기"
+
+#: src/app/main/ui/comments.cljs
+msgid "comments.add-reaction"
+msgstr "반응 추가"

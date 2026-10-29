@@ -10649,3 +10649,11 @@ msgstr "Scale the selection with its content (K to leave). Enter applies."
 #: src/app/main/ui/workspace/sidebar/options/menus/measures.cljs
 msgid "workspace.options.scale.anchor"
 msgstr "Scale from"
+
+#: src/app/main/ui/workspace/sidebar/layers.cljs
+msgid "workspace.sidebar.layers.collapse-all"
+msgstr "Collapse all layers"
+
+#: src/app/main/ui/comments.cljs
+msgid "comments.add-reaction"
+msgstr "Add reaction"
