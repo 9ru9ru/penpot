@@ -17,6 +17,7 @@
    [app.common.logic.libraries :as cll]
    [app.common.types.component :as ctk]
    [app.common.types.container :as ctn]
+   [app.common.types.text :as txt]
    [app.common.uuid :as uuid]
    [app.main.data.changes :as dch]
    [app.main.data.event :as ev]
@@ -282,6 +283,55 @@
                           (rx/of :interrupt ::dwsp/interrupt)
                           (rx/of ::dwsp/interrupt))]
         (rx/merge expand-s interrupt-s)))))
+
+(defn- text-signature
+  [content]
+  (some-> (txt/node-seq txt/is-text-node? content)
+          (first)
+          (select-keys [:font-family :font-size :font-weight :font-style :fills])))
+
+(defn- matching-signature
+  "What two layers must share to be \"matching\": the same component (or
+  the same shape inside copies of one), or else the same type and look."
+  [shape]
+  (cond
+    (some? (:component-id shape))
+    {:component-id (:component-id shape)}
+
+    (some? (:shape-ref shape))
+    {:shape-ref (:shape-ref shape)}
+
+    :else
+    (cond-> {:type    (:type shape)
+             :fills   (:fills shape)
+             :strokes (:strokes shape)
+             :shadow  (:shadow shape)
+             :blur    (:blur shape)}
+      (= :text (:type shape))
+      (assoc :text (text-signature (:content shape)))
+
+      (not= :text (:type shape))
+      (assoc :radius [(:r1 shape) (:r2 shape) (:r3 shape) (:r4 shape)]))))
+
+(defn select-matching
+  "Selects every visible, unlocked layer of the page that matches one of
+  the selected ones, like Figma's \"select matching layers\"."
+  []
+  (ptk/reify ::select-matching
+    ptk/WatchEvent
+    (watch [_ state _]
+      (let [objects  (dsh/lookup-page-objects state)
+            selected (dsh/lookup-selected state)
+            sigs     (into #{} (map #(matching-signature (get objects %))) selected)
+            ids      (into (d/ordered-set)
+                           (comp (remove #(= uuid/zero (:id %)))
+                                 (remove :hidden)
+                                 (remove :blocked)
+                                 (filter #(contains? sigs (matching-signature %)))
+                                 (map :id))
+                           (vals objects))]
+        (when (seq selected)
+          (rx/of (select-shapes ids)))))))
 
 (defn select-all
   []

@@ -1743,6 +1743,7 @@
 (dm/export dws/duplicate-selected)
 (dm/export dws/handle-area-selection)
 (dm/export dws/select-all)
+(dm/export dws/select-matching)
 (dm/export dws/select-inside-group)
 (dm/export dws/select-shape)
 (dm/export dws/select-prev-shape)

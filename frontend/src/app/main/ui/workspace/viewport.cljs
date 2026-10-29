@@ -47,6 +47,7 @@
    [app.main.ui.workspace.viewport.hooks :as hooks]
    [app.main.ui.workspace.viewport.interactions :as interactions]
    [app.main.ui.workspace.viewport.outline :as outline]
+   [app.main.ui.workspace.viewport.outline-view :refer [outline-view*]]
    [app.main.ui.workspace.viewport.pixel-overlay :as pixel-overlay]
    [app.main.ui.workspace.viewport.presence :as presence]
    [app.main.ui.workspace.viewport.rulers :as rulers]
@@ -266,6 +267,7 @@
                                       (or show-distances? mode-inspect? read-only?))
         show-artboard-names?     (contains? layout :display-artboard-names)
         hide-ui?                 (contains? layout :hide-ui)
+        outline-mode?            (contains? layout :outline-mode)
         show-rulers?             (and (contains? layout :rulers) (not hide-ui?))
 
 
@@ -455,6 +457,14 @@
                 :y (+ (:y vbox) rule-area-size)
                 :width (max 0 (- (:width vbox) rule-area-size))
                 :height (max 0 (- (:height vbox) rule-area-size))}]]]
+
+      ;; Outline mode covers the rendered shapes and draws them as lines;
+      ;; the selection, titles and handles below stay on top.
+      (when outline-mode?
+        [:> outline-view* {:objects base-objects
+                           :zoom zoom
+                           :vbox vbox
+                           :background background}])
 
       [:g {:style {:pointer-events (if disable-events? "none" "auto")}}
        (when show-text-editor?

@@ -26,6 +26,7 @@
    [app.main.data.workspace.shapes :as dws]
    [app.main.data.workspace.text.shortcuts :as dwtxts]
    [app.main.data.workspace.texts :as dwtxt]
+   [app.main.data.workspace.tidy :as dwtd]
    [app.main.data.workspace.transforms :as dwt]
    [app.main.data.workspace.undo :as dwu]
    [app.main.data.workspace.variants :as dwv]
@@ -74,8 +75,9 @@
                           :subsections [:edit]
                           :fn #(emit-when-no-readonly dwu/undo)}
 
-   :redo                 {:tooltip (ds/meta "Y")
-                          :command [(ds/c-mod "shift+z") (ds/c-mod "y")]
+   :redo                 {:tooltip (ds/meta-shift "Z")
+                          ;; Ctrl+Y is outline mode, as in Figma.
+                          :command (ds/c-mod "shift+z")
                           :section [:workspace]
                           :subsections [:edit]
                           :fn #(emit-when-no-readonly dwu/redo)}
@@ -500,6 +502,24 @@
                           :section [:workspace]
                           :subsections [:main-menu]
                           :fn #(st/emit! (toggle-layout-flag :rulers))}
+
+   :tidy-up              {:tooltip (ds/meta-alt "T")
+                          :command (ds/c-mod "alt+t")
+                          :section [:workspace]
+                          :subsections [:alignment]
+                          :fn #(emit-when-no-readonly (dwtd/tidy-up-selected))}
+
+   :select-matching      {:tooltip (ds/meta-alt "A")
+                          :command (ds/c-mod "alt+a")
+                          :section [:workspace]
+                          :subsections [:edit]
+                          :fn #(st/emit! (dw/select-matching))}
+
+   :toggle-outline-mode  {:tooltip (ds/meta "Y")
+                          :command (ds/c-mod "y")
+                          :section [:workspace]
+                          :subsections [:main-menu]
+                          :fn #(st/emit! (toggle-layout-flag :outline-mode))}
 
    :select-all           {:tooltip (ds/meta "A")
                           :command (ds/c-mod "a")

@@ -8568,3 +8568,31 @@ msgstr "이 항목만 업데이트합니다. 나머지는 그대로 둡니다"
 #: src/app/main/ui/workspace/libraries.cljs
 msgid "workspace.libraries.update-only-this.short"
 msgstr "이것만"
+
+#: src/app/main/ui/workspace/main_menu.cljs
+msgid "workspace.header.menu.select-matching"
+msgstr "같은 레이어 모두 선택"
+
+#: src/app/main/ui/workspace/main_menu.cljs
+msgid "workspace.header.menu.show-outline-mode"
+msgstr "아웃라인 보기"
+
+#: src/app/main/ui/workspace/main_menu.cljs
+msgid "workspace.header.menu.hide-outline-mode"
+msgstr "아웃라인 끄기"
+
+#: src/app/main/ui/workspace/main_menu.cljs
+msgid "shortcuts.select-matching"
+msgstr "같은 레이어 모두 선택"
+
+#: src/app/main/ui/workspace/main_menu.cljs
+msgid "shortcuts.toggle-outline-mode"
+msgstr "아웃라인 보기"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/align.cljs
+msgid "workspace.align.tidy-up"
+msgstr "정리 — 같은 간격 격자로 (%s)"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/align.cljs
+msgid "shortcuts.tidy-up"
+msgstr "정리 (같은 간격 격자)"

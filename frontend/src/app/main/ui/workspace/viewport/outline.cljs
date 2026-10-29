@@ -20,17 +20,22 @@
    [rumext.v2 :as mf]))
 
 (mf/defc outline*
-  [{:keys [shape modifier zoom]}]
+  [{:keys [shape modifier zoom color]}]
   (let [zoom      (d/nilv zoom 1)
         shape     (gsh/transform-shape shape (:modifiers modifier))
         transform (gsh/transform-str shape)
 
         ;; NOTE: that we don't use mf/deref to avoid a repaint dependency here
         objects   (deref refs/workspace-page-objects)
-        color     (if (or
-                       (ctn/in-any-component? objects shape)
-                       (ctk/is-variant-container? shape))
+        color     (cond
+                    (some? color)
+                    color
+
+                    (or (ctn/in-any-component? objects shape)
+                        (ctk/is-variant-container? shape))
                     "var(--assets-component-hightlight)"
+
+                    :else
                     "var(--color-accent-tertiary)")
 
         x         (dm/get-prop shape :x)

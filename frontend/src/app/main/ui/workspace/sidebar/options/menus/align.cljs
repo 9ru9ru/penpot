@@ -9,7 +9,9 @@
   (:require
    [app.main.data.workspace :as dw]
    [app.main.data.workspace.shortcuts :as sc]
+   [app.main.data.workspace.tidy :as dwtd]
    [app.main.store :as st]
+   [app.main.ui.ds.foundations.assets.icon :as i :refer [icon*]]
    [app.main.ui.icons :as deprecated-icon]
    [app.util.dom :as dom]
    [app.util.i18n :as i18n :refer [tr]]
@@ -37,7 +39,10 @@
            (let [value (-> (dom/get-current-target event)
                            (dom/get-data "value")
                            (keyword))]
-             (st/emit! (dw/distribute-objects value)))))]
+             (st/emit! (dw/distribute-objects value)))))
+
+        tidy-up
+        (mf/use-fn #(st/emit! (dwtd/tidy-up-selected)))]
 
     (when-not (and disabled-align disabled-distribute)
       [:div {:class (stl/css :align-options)}
@@ -105,5 +110,12 @@
                   :disabled disabled-distribute
                   :data-value "vertical"
                   :on-click distribute-objects}
-         deprecated-icon/distribute-vertical-spacing]]])))
+         deprecated-icon/distribute-vertical-spacing]
+
+        [:button {:title (tr "workspace.align.tidy-up" (sc/get-tooltip :tidy-up))
+                  :class (stl/css-case :align-button true
+                                       :disabled disabled-distribute)
+                  :disabled disabled-distribute
+                  :on-click tidy-up}
+         [:> icon* {:icon-id i/flex-grid :size "s"}]]]])))
 

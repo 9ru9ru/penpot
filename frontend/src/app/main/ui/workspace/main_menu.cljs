@@ -388,6 +388,19 @@
          (tr "workspace.header.menu.show-rules"))]
       [:> shortcuts* {:id :toggle-rulers}]]
 
+     [:> dropdown-menu-item* {:class (stl/css :base-menu-item :submenu-item)
+                              :on-click    toggle-flag
+                              :on-key-down (fn [event]
+                                             (when (kbd/enter? event)
+                                               (toggle-flag event)))
+                              :data-testid "outline-mode"
+                              :id          "file-menu-outline-mode"}
+      [:span {:class (stl/css :item-name)}
+       (if (contains? layout :outline-mode)
+         (tr "workspace.header.menu.hide-outline-mode")
+         (tr "workspace.header.menu.show-outline-mode"))]
+      [:> shortcuts* {:id :toggle-outline-mode}]]
+
 
      [:> dropdown-menu-item* {:class (stl/css :base-menu-item :submenu-item)
                               :on-click    toggle-flag
@@ -500,6 +513,10 @@
         (mf/use-fn
          #(st/emit! (dw/select-all)))
 
+        select-matching
+        (mf/use-fn
+         #(st/emit! (dw/select-matching)))
+
         find
         (mf/use-fn (fn [] (on-close) (st/emit! (dw/open-layers-search :find {:force? true}))))
 
@@ -527,6 +544,16 @@
       [:span {:class (stl/css :item-name)}
        (tr "workspace.header.menu.select-all")]
       [:> shortcuts* {:id :select-all}]]
+
+     [:> dropdown-menu-item* {:class (stl/css :base-menu-item :submenu-item)
+                              :on-click    select-matching
+                              :on-key-down (fn [event]
+                                             (when (kbd/enter? event)
+                                               (select-matching event)))
+                              :id          "file-menu-select-matching"}
+      [:span {:class (stl/css :item-name)}
+       (tr "workspace.header.menu.select-matching")]
+      [:> shortcuts* {:id :select-matching}]]
 
      [:> dropdown-menu-item* {:class (stl/css :base-menu-item :submenu-item)
                               :on-click find

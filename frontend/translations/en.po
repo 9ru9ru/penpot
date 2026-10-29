@@ -10665,3 +10665,31 @@ msgstr "Update only this asset; the rest stay as they are"
 #: src/app/main/ui/workspace/libraries.cljs
 msgid "workspace.libraries.update-only-this.short"
 msgstr "Update"
+
+#: src/app/main/ui/workspace/main_menu.cljs
+msgid "workspace.header.menu.select-matching"
+msgstr "Select matching layers"
+
+#: src/app/main/ui/workspace/main_menu.cljs
+msgid "workspace.header.menu.show-outline-mode"
+msgstr "Show outlines"
+
+#: src/app/main/ui/workspace/main_menu.cljs
+msgid "workspace.header.menu.hide-outline-mode"
+msgstr "Hide outlines"
+
+#: src/app/main/ui/workspace/main_menu.cljs
+msgid "shortcuts.select-matching"
+msgstr "Select matching layers"
+
+#: src/app/main/ui/workspace/main_menu.cljs
+msgid "shortcuts.toggle-outline-mode"
+msgstr "Outline mode"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/align.cljs
+msgid "workspace.align.tidy-up"
+msgstr "Tidy up (%s)"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/align.cljs
+msgid "shortcuts.tidy-up"
+msgstr "Tidy up"
