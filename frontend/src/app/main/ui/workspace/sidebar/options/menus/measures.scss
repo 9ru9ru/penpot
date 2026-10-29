@@ -234,3 +234,55 @@
 .numeric-input-measures {
   --dropdown-width: var(--seven-columns-width);
 }
+
+.scale-row {
+  display: flex;
+  align-items: center;
+  gap: deprecated.$s-8;
+  grid-column: 1/-1;
+}
+
+.scale-input-wrapper {
+  @extend %input-element;
+  @include deprecated.body-small-typography;
+
+  flex: 1;
+  gap: deprecated.$s-6;
+
+  .icon-text {
+    padding-top: deprecated.$s-1;
+    white-space: nowrap;
+  }
+}
+
+.scale-input {
+  inline-size: 100%;
+  min-inline-size: 0;
+}
+
+.scale-unit {
+  color: var(--color-foreground-secondary);
+}
+
+.scale-anchors {
+  display: grid;
+  grid-template-columns: repeat(3, deprecated.$s-8);
+  gap: deprecated.$s-2;
+  padding: deprecated.$s-4;
+  border-radius: deprecated.$br-6;
+  background-color: var(--color-background-tertiary);
+}
+
+.scale-anchor {
+  inline-size: deprecated.$s-8;
+  block-size: deprecated.$s-8;
+  padding: 0;
+  border: none;
+  border-radius: 2px;
+  background-color: var(--color-background-quaternary);
+  cursor: pointer;
+}
+
+.scale-anchor-on {
+  background-color: var(--color-accent-primary);
+}

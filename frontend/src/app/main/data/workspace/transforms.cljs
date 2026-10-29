@@ -428,6 +428,38 @@
            (let [modif-tree (gm/set-objects-modifiers modif-tree objects)]
              (rx/of (dwm/apply-modifiers* objects modif-tree nil options)))))))))
 
+(defn- anchor-point
+  "One of the nine points of `rect`, as [:left|:center|:right :top|:center|:bottom]."
+  [rect [h v]]
+  (gpt/point (case h :left (:x rect) :right (+ (:x rect) (:width rect)) (+ (:x rect) (/ (:width rect) 2)))
+             (case v :top (:y rect) :bottom (+ (:y rect) (:height rect)) (+ (:y rect) (/ (:height rect) 2)))))
+
+(defn scale-selected
+  "Scales the selection by `factor` around `anchor` of its bounding box,
+  content included (strokes, radii, effects, font sizes), like Figma's
+  scale tool."
+  [factor anchor]
+  (assert (and (number? factor) (pos? factor)))
+  (ptk/reify ::scale-selected
+    ptk/WatchEvent
+    (watch [_ state _]
+      (let [page-id (:current-page-id state)
+            objects (dsh/lookup-page-objects state page-id)
+            ids     (dsh/lookup-selected state)
+            rect    (gsh/shapes->rect (map (d/getf objects) ids))
+            origin  (anchor-point rect anchor)
+            scalev  (gpt/point factor factor)
+            modif-tree
+            (dwm/build-modif-tree ids objects
+                                  (fn [_]
+                                    (-> (ctm/resize-modifiers scalev origin)
+                                        (ctm/scale-content factor))))]
+        (when (and (seq ids) (not= factor 1))
+          (if (features/active-feature? state "render-wasm/v1")
+            (rx/of (dwm/apply-wasm-modifiers modif-tree {:ignore-snap-pixel true}))
+            (let [modif-tree (gm/set-objects-modifiers modif-tree objects)]
+              (rx/of (dwm/apply-modifiers* objects modif-tree nil {:ignore-snap-pixel true})))))))))
+
 (defn change-orientation
   "Change orientation of shapes, from the sidebar options form.
   Will ignore pixel snap used in the options side panel"

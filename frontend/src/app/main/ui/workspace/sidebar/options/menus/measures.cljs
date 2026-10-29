@@ -34,6 +34,7 @@
    [app.main.ui.workspace.sidebar.options.menus.input-wrapper-tokens :refer [numeric-input-wrapper*]]
    [app.util.dom :as dom]
    [app.util.i18n :as i18n :refer [tr]]
+   [app.util.keyboard :as kbd]
    [clojure.set :as set]
    [cuerdas.core :as str]
    [rumext.v2 :as mf]))
@@ -176,6 +177,62 @@
          (identical? (get o-values :proportion-lock)
                      (get n-values :proportion-lock)))))
 
+(def ^:private anchors
+  [[:left :top] [:center :top] [:right :top]
+   [:left :center] [:center :center] [:right :center]
+   [:left :bottom] [:center :bottom] [:right :bottom]])
+
+(mf/defc scale-row*
+  "While the scale tool (K) is on: scale the selection by a percentage
+  around one of nine anchor points, content included."
+  {::mf/private true}
+  []
+  (let [anchor*  (mf/use-state [:left :top])
+        anchor   (deref anchor*)
+        input-ref (mf/use-ref nil)
+
+        apply-scale
+        (mf/use-fn
+         (mf/deps anchor)
+         (fn [event]
+           (let [node    (dom/get-target event)
+                 percent (d/parse-double (dom/get-value node))]
+             (when (and (some? percent) (pos? percent))
+               (st/emit! (dwt/scale-selected (/ percent 100) anchor)))
+             (dom/set-value! node "100"))))
+
+        on-key-down
+        (mf/use-fn
+         (mf/deps apply-scale)
+         (fn [event]
+           (when (kbd/enter? event)
+             (dom/prevent-default event)
+             (apply-scale event)
+             (dom/blur! (dom/get-target event)))))]
+
+    [:div {:class (stl/css :scale-row)}
+     [:label {:class (stl/css :scale-input-wrapper)
+              :title (tr "workspace.options.scale.hint")}
+      [:span {:class (stl/css :icon-text)} (tr "workspace.options.scale")]
+      [:input {:ref input-ref
+               :class (stl/css :scale-input)
+               :type "number"
+               :min 1
+               :default-value "100"
+               :on-key-down on-key-down}]
+      [:span {:class (stl/css :scale-unit)} "%"]]
+     [:div {:class (stl/css :scale-anchors)
+            :role "radiogroup"
+            :aria-label (tr "workspace.options.scale.anchor")}
+      (for [a anchors]
+        [:button {:key (str a)
+                  :class (stl/css-case :scale-anchor true
+                                       :scale-anchor-on (= a anchor))
+                  :role "radio"
+                  :aria-checked (= a anchor)
+                  :aria-label (str (name (first a)) " " (name (second a)))
+                  :on-click #(reset! anchor* a)}])]]))
+
 (mf/defc measures-menu*
   {::mf/wrap [#(mf/memo' % check-measures-menu-props)]}
   [{:keys [ids values applied-tokens type shapes]}]
@@ -293,6 +350,9 @@
 
         proportion-lock
         (get values :proportion-lock)
+
+        scale-tool?
+        (contains? (mf/deref refs/workspace-layout) :scale-text)
 
         clip-content-ref
         (mf/use-ref nil)
@@ -593,6 +653,9 @@
                           :disabled (= proportion-lock :multiple)
                           :aria-label (if proportion-lock (tr "workspace.options.size.unlock") (tr "workspace.options.size.lock"))
                           :on-click on-proportion-lock-change}]])
+
+     (when (and (options :size) scale-tool?)
+       [:> scale-row* {}])
 
      (when (options :position)
        [:div {:class (stl/css :position)}

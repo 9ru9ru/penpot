@@ -8540,3 +8540,15 @@ msgstr "스프링: 천천히"
 #: src/app/main/ui/workspace/sidebar/options/menus/interactions.cljs
 msgid "workspace.options.interaction-easing-custom-hint"
 msgstr "숫자 4개(예: 0.25, 0.1, 0.25, 1)를 입력하거나 손잡이를 끌어 조절"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/measures.cljs
+msgid "workspace.options.scale"
+msgstr "배율"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/measures.cljs
+msgid "workspace.options.scale.hint"
+msgstr "선택한 것을 내용까지 함께 배율로 조절합니다 (K로 끄기). Enter로 적용."
+
+#: src/app/main/ui/workspace/sidebar/options/menus/measures.cljs
+msgid "workspace.options.scale.anchor"
+msgstr "기준점"
