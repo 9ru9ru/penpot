@@ -10545,3 +10545,47 @@ msgstr "Say something… (Enter sends, Esc closes)"
 #: src/app/main/ui/workspace/presence.cljs
 msgid "shortcuts.cursor-chat"
 msgstr "Cursor chat"
+
+#: src/app/main/ui/workspace/bulk_rename.cljs
+msgid "workspace.bulk-rename.title"
+msgstr "Rename %s layers"
+
+#: src/app/main/ui/workspace/bulk_rename.cljs
+msgid "workspace.bulk-rename.rename-to"
+msgstr "Rename to"
+
+#: src/app/main/ui/workspace/bulk_rename.cljs
+msgid "workspace.bulk-rename.match"
+msgstr "Match (optional)"
+
+#: src/app/main/ui/workspace/bulk_rename.cljs
+msgid "workspace.bulk-rename.match-placeholder"
+msgstr "Change only this part of each name"
+
+#: src/app/main/ui/workspace/bulk_rename.cljs
+msgid "workspace.bulk-rename.regex"
+msgstr "Regular expression"
+
+#: src/app/main/ui/workspace/bulk_rename.cljs
+msgid "workspace.bulk-rename.case-sensitive"
+msgstr "Match case"
+
+#: src/app/main/ui/workspace/bulk_rename.cljs
+msgid "workspace.bulk-rename.start"
+msgstr "Start at"
+
+#: src/app/main/ui/workspace/bulk_rename.cljs
+msgid "workspace.bulk-rename.hint"
+msgstr "$& current name (or the matched text) · $n $nn $nnn number up · $N $NN $NNN number down · $1… regex groups. Numbers follow the layers panel, top first."
+
+#: src/app/main/ui/workspace/bulk_rename.cljs
+msgid "workspace.bulk-rename.bad-regex"
+msgstr "That regular expression is not valid."
+
+#: src/app/main/ui/workspace/bulk_rename.cljs
+msgid "workspace.bulk-rename.more"
+msgstr "and %s more"
+
+#: src/app/main/ui/workspace/bulk_rename.cljs
+msgid "workspace.bulk-rename.apply"
+msgstr "Rename %s"

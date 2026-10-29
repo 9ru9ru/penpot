@@ -381,7 +381,7 @@
         get-tt           #(sc/get-effective-tooltip % custom-shortcuts)
 
         do-rename #(st/emit! (dw/start-rename-selected))]
-    (when (= (count shapes) 1)
+    (when (seq shapes)
       [:*
        [:> menu-separator* {}]
        [:> menu-entry* {:title (tr "workspace.shape.menu.rename")

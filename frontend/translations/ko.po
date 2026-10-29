@@ -8420,3 +8420,47 @@ msgstr "말하기… (Enter 보내기, Esc 닫기)"
 #: src/app/main/ui/workspace/presence.cljs
 msgid "shortcuts.cursor-chat"
 msgstr "커서 채팅"
+
+#: src/app/main/ui/workspace/bulk_rename.cljs
+msgid "workspace.bulk-rename.title"
+msgstr "레이어 %s개 이름 바꾸기"
+
+#: src/app/main/ui/workspace/bulk_rename.cljs
+msgid "workspace.bulk-rename.rename-to"
+msgstr "새 이름"
+
+#: src/app/main/ui/workspace/bulk_rename.cljs
+msgid "workspace.bulk-rename.match"
+msgstr "찾을 부분 (선택)"
+
+#: src/app/main/ui/workspace/bulk_rename.cljs
+msgid "workspace.bulk-rename.match-placeholder"
+msgstr "이 부분만 바꿉니다"
+
+#: src/app/main/ui/workspace/bulk_rename.cljs
+msgid "workspace.bulk-rename.regex"
+msgstr "정규식"
+
+#: src/app/main/ui/workspace/bulk_rename.cljs
+msgid "workspace.bulk-rename.case-sensitive"
+msgstr "대소문자 구분"
+
+#: src/app/main/ui/workspace/bulk_rename.cljs
+msgid "workspace.bulk-rename.start"
+msgstr "시작 번호"
+
+#: src/app/main/ui/workspace/bulk_rename.cljs
+msgid "workspace.bulk-rename.hint"
+msgstr "$& 원래 이름(또는 찾은 부분) · $n $nn $nnn 오름차순 번호 · $N $NN $NNN 내림차순 번호 · $1… 정규식 그룹. 번호는 레이어 패널 위에서부터 매깁니다."
+
+#: src/app/main/ui/workspace/bulk_rename.cljs
+msgid "workspace.bulk-rename.bad-regex"
+msgstr "정규식이 올바르지 않습니다."
+
+#: src/app/main/ui/workspace/bulk_rename.cljs
+msgid "workspace.bulk-rename.more"
+msgstr "외 %s개"
+
+#: src/app/main/ui/workspace/bulk_rename.cljs
+msgid "workspace.bulk-rename.apply"
+msgstr "%s개 바꾸기"

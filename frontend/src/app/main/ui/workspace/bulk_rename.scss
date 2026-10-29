@@ -1,0 +1,134 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+//
+// Copyright (c) KALEIDOS INC Sucursal en España SL
+
+@use "refactor/common-refactor.scss" as deprecated;
+
+.modal-overlay {
+  @extend %modal-overlay-base;
+}
+
+.modal-container {
+  @extend %modal-container-base;
+
+  min-width: deprecated.$s-480;
+}
+
+.modal-header {
+  margin-bottom: deprecated.$s-16;
+}
+
+.modal-title {
+  @include deprecated.headline-medium-typography;
+
+  color: var(--modal-title-foreground-color);
+}
+
+.modal-close-btn {
+  @extend %modal-close-btn-base;
+}
+
+.modal-content {
+  @include deprecated.flex-column;
+  @include deprecated.body-small-typography;
+
+  gap: deprecated.$s-12;
+  margin-bottom: deprecated.$s-24;
+  color: var(--modal-text-foreground-color);
+}
+
+.field {
+  @include deprecated.flex-column;
+
+  gap: deprecated.$s-4;
+}
+
+.field-label {
+  color: var(--color-foreground-secondary);
+}
+
+.text-input,
+.number-input {
+  @extend %input-element;
+  @include deprecated.body-small-typography;
+
+  inline-size: 100%;
+  padding: 0 deprecated.$s-8;
+  color: var(--input-foreground-color-active);
+}
+
+.number-input {
+  inline-size: deprecated.$s-64;
+}
+
+.options {
+  display: flex;
+  align-items: center;
+  gap: deprecated.$s-16;
+}
+
+.start {
+  display: flex;
+  align-items: center;
+  gap: deprecated.$s-6;
+  cursor: pointer;
+}
+
+.start {
+  margin-inline-start: auto;
+}
+
+.hint {
+  color: var(--color-foreground-secondary);
+  line-height: 1.5;
+}
+
+.error {
+  color: var(--color-foreground-error);
+}
+
+.preview {
+  @include deprecated.flex-column;
+
+  gap: deprecated.$s-4;
+  padding: deprecated.$s-8;
+  border-radius: deprecated.$br-8;
+  background-color: var(--color-background-tertiary);
+}
+
+.preview-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: deprecated.$s-8;
+}
+
+.old-name,
+.new-name {
+  @include deprecated.text-ellipsis;
+}
+
+.old-name {
+  color: var(--color-foreground-secondary);
+}
+
+.unchanged .new-name {
+  color: var(--color-foreground-secondary);
+}
+
+.preview-more {
+  color: var(--color-foreground-secondary);
+}
+
+.modal-footer {
+  @extend %modal-action-btns;
+}
+
+.cancel-button {
+  @extend %modal-cancel-btn;
+}
+
+.accept-button {
+  @extend %modal-accept-btn;
+}

@@ -41,6 +41,7 @@
    [app.main.data.profile :as du]
    [app.main.data.project :as dpj]
    [app.main.data.workspace.bool :as dwb]
+   [app.main.data.workspace.bulk-rename :as dwbr]
    [app.main.data.workspace.clipboard :as dwcp]
    [app.main.data.workspace.colors :as dwcl]
    [app.main.data.workspace.comments :as dwcm]
@@ -914,9 +915,17 @@
     (watch [_ state _]
       (let [selected (dsh/lookup-selected state)
             id       (first selected)]
-        (when (= (count selected) 1)
+        (cond
+          (= (count selected) 1)
           (rx/of (dcm/go-to-workspace :layout :layers)
-                 (start-rename-shape id)))))))
+                 (start-rename-shape id))
+
+          (> (count selected) 1)
+          (rx/of (modal/show :bulk-rename {:ids (dwbr/ordered-ids state selected)})))))))
+
+(defmethod ptk/resolve ::end-rename-shape-by-id
+  [_ {:keys [id name]}]
+  (end-rename-shape id name))
 
 ;; --- Shape Vertical Ordering
 

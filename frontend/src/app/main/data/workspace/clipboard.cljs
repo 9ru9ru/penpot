@@ -262,6 +262,7 @@
 (declare ^:private paste-image)
 (declare ^:private paste-svg-text)
 (declare ^:private paste-shapes)
+(declare ^:private paste-shapes*)
 (declare ^:private calculate-paste-position)
 
 (def ^:private default-options
@@ -653,13 +654,47 @@
             :copied-shapes
             (if (= file-id (:file-id pdata))
               (let [pdata (assoc pdata :images [])]
-                (rx/of (paste-shapes pdata)))
+                (rx/of (paste-shapes* pdata)))
               (->> (rx/from images)
                    (rx/merge-map (partial upload-media file-id))
                    (rx/reduce conj [])
                    (rx/map #(assoc pdata :images %))
-                   (rx/map paste-shapes)))
+                   (rx/map paste-shapes*)))
             nil))))))
+
+(defn- paste-replacing-each
+  "Paste to replace with several shapes selected: each one is replaced by
+  its own copy of the clipboard, and all the copies end up selected."
+  [pdata]
+  (ptk/reify ::paste-replacing-each
+    ptk/WatchEvent
+    (watch [_ state _]
+      (let [targets  (dsh/lookup-selected state)
+            created* (atom (d/ordered-set))
+            undo-id  (js/Symbol)]
+        (rx/concat
+         (rx/of (dwu/start-undo-transaction undo-id))
+         (->> (rx/from (vec targets))
+              (rx/map #(paste-shapes (assoc pdata :replace-id % :created* created*))))
+         (rx/of (ptk/event ::select-created created*)
+                (dwu/commit-undo-transaction undo-id)))))))
+
+(defmethod ptk/resolve ::select-created
+  [_ created*]
+  (ptk/reify ::select-created
+    ptk/WatchEvent
+    (watch [_ _ _]
+      (rx/of (dws/select-shapes @created*)))))
+
+(defn- paste-shapes*
+  [pdata]
+  (ptk/reify ::paste-shapes*
+    ptk/WatchEvent
+    (watch [_ state _]
+      (if (and (:replace pdata)
+               (< 1 (count (dsh/lookup-selected state))))
+        (rx/of (paste-replacing-each pdata))
+        (rx/of (paste-shapes pdata))))))
 
 (defn- paste-transit-props
   [pdata]
@@ -923,12 +958,14 @@
 
               position     (deref ms/mouse-position)
 
-              ;; Replace mode is only valid with a single selected shape.
-              ;; In that case we drop the pasted content at its position and
-              ;; delete it in the same transaction.
+              ;; Replace mode drops the pasted content at the position of the
+              ;; replaced shape and deletes it in the same transaction. With
+              ;; several shapes selected, `paste-replacing-each` pastes once
+              ;; per shape and names each one in `:replace-id`.
               page-selected (dsh/lookup-selected state)
-              replace-id    (when (and (:replace pdata) (= 1 (count page-selected)))
-                              (first page-selected))
+              replace-id    (or (:replace-id pdata)
+                                (when (and (:replace pdata) (= 1 (count page-selected)))
+                                  (first page-selected)))
 
               ;; Calculate position for the pasted elements
               [candidate-parent-id
@@ -998,6 +1035,8 @@
                              (some? drop-cell)
                              (pcb/update-shapes [parent-id]
                                                 #(ctl/add-children-to-cell % selected all-objects drop-cell)))
+
+              _            (some-> (:created* pdata) (swap! into selected))
 
               add-component-to-variant? (and
                                          ;; Any of the shapes is a head
