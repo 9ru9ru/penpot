@@ -39,6 +39,16 @@
         negate?              (:resize-negate? rect-data)
         axis                 (:resize-axis rect-data)
 
+        ;; A negative gap (items overlapping) gives a negative size;
+        ;; draw the same area with a positive one.
+        rect-data            (cond-> rect-data
+                               (neg? (:width rect-data))
+                               (-> (update :x + (:width rect-data))
+                                   (update :width -))
+                               (neg? (:height rect-data))
+                               (-> (update :y + (:height rect-data))
+                                   (update :height -)))
+
         on-pointer-down
         (mf/use-fn
          (mf/deps frame-id gap-type gap)

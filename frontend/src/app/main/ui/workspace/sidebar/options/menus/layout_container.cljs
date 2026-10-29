@@ -688,10 +688,13 @@
   (select-gap! nil))
 
 (mf/defc gap-section*
-  [{:keys [is-column wrap-type on-change value applied-tokens ids]
+  [{:keys [is-column wrap-type on-change value applied-tokens ids allow-negative]
     :as props}]
   (let [token-numeric-inputs
         (features/use-feature "tokens/numeric-input")
+
+        ;; Flex gaps may be negative to overlap items, as in Figma.
+        min-gap (if allow-negative nil 0)
 
         nowrap? (= :nowrap wrap-type)
 
@@ -745,7 +748,7 @@
          :on-blur on-gap-blur
          :icon i/gap-vertical
          :nillable true
-         :min 0
+         :min min-gap
          :attr :row-gap
          :property "Row gap"
          :values {:row-gap (:row-gap value)}
@@ -772,7 +775,7 @@
           :on-change on-row-gap-change
           :on-blur on-gap-blur
           :is-nillable true
-          :min 0
+          :min min-gap
           :value (:row-gap value)
           :is-disabled row-gap-disabled?}]])
 
@@ -784,7 +787,7 @@
          :on-blur on-gap-blur
          :icon i/gap-horizontal
          :nillable true
-         :min 0
+         :min min-gap
          :attr :column-gap
          :align :right
          :property "Column gap"
@@ -811,7 +814,7 @@
           :on-change on-column-gap-change
           :on-blur on-gap-blur
           :is-nillable true
-          :min 0
+          :min min-gap
           :value (:column-gap value)
           :disabled col-gap-disabled?}]])]))
 
@@ -1358,6 +1361,7 @@
                                     :on-change on-align-content-change}]])
           [:div {:class (stl/css :forth-row)}
            [:> gap-section* {:is-column is-column
+                             :allow-negative true
                              :wrap-type wrap-type
                              :on-change on-gap-change
                              :ids ids
