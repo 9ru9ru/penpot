@@ -21,6 +21,7 @@
    [app.main.data.workspace.drawing.common :as dwdc]
    [app.main.data.workspace.layers :as dwly]
    [app.main.data.workspace.libraries :as dwl]
+   [app.main.data.workspace.multiplayer :as dwm]
    [app.main.data.workspace.shape-layout :as dwsl]
    [app.main.data.workspace.shapes :as dws]
    [app.main.data.workspace.text.shortcuts :as dwtxts]
@@ -161,7 +162,7 @@
                           :command "escape"
                           :subsections [:edit]
                           :section [:workspace]
-                          :fn #(st/emit! :interrupt (dwdc/clear-drawing) (dw/deselect-all true))}
+                          :fn #(st/emit! (dwm/stop-following) :interrupt (dwdc/clear-drawing) (dw/deselect-all true))}
 
    :find             {:tooltip (ds/meta "F") :command (ds/c-mod "f") :subsections [:edit]
                       :section [:workspace]
@@ -558,6 +559,12 @@
                              :subsections [:main-menu]
                              :section [:workspace]
                              :fn #(st/emit! (toggle-layout-flag :snap-guides))}
+
+   :cursor-chat          {:tooltip "/"
+                          :command "/"
+                          :subsections [:main-menu]
+                          :section [:workspace]
+                          :fn #(st/emit! (dwm/open-cursor-chat))}
 
    :show-shortcuts       {:tooltip "?"
                           :command "?"

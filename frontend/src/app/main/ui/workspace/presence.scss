@@ -8,24 +8,18 @@
 @use "ds/_borders.scss" as *;
 @use "ds/_sizes.scss" as *;
 
-.active-users,
-.active-users-opened {
-  background: none;
-  cursor: pointer;
+.active-users-wrapper {
+  position: relative;
   display: flex;
-  flex-direction: row-reverse;
-  justify-content: flex-end;
   align-items: center;
-  margin: 0;
   padding: 0 var(--sp-xs);
-  border: none;
-  border-radius: $br-8;
 }
 
 .active-users-list {
   display: flex;
   flex-direction: row-reverse;
   justify-content: flex-end;
+  align-items: center;
   margin: 0;
   gap: var(--user-list-gap, 0);
 }
@@ -56,21 +50,117 @@
   margin-inline-start: var(--user-list-inline-margin, calc(-1 * var(--sp-xs)));
 }
 
+.users-num-button {
+  @include t.use-typography("body-small");
+
+  background: none;
+  border: none;
+  padding: 0;
+  color: inherit;
+  cursor: pointer;
+}
+
 .session-icon {
   @extend %user-icon;
 
+  position: relative;
   margin-inline-start: var(--user-list-inline-margin, calc(-1 * var(--sp-xs)));
+  transition: transform 0.12s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+  }
 }
 
-.active-users-opened {
-  position: absolute;
-  right: calc(-1 * var(--sp-xxs));
-  top: calc(-1 * var(--sp-xxs));
-  padding: var(--sp-s);
-  margin: calc(-1 * var(--sp-xxs)) calc(-1 * var(--sp-xs)) 0 0;
-  background-color: var(--menu-background-color);
-  z-index: 4; // FIXME: this is hardcoded because of the way its component uses z-index from cljs
+// Ring in the session's color: the one being followed, and our own
+// avatar while spotlighting.
+.followed,
+.spotlight {
+  box-shadow:
+    0 0 0 $b-2 var(--color-background-primary),
+    0 0 0 calc(2 * #{$b-2}) var(--session-color);
+}
 
-  --user-list-gap: var(--sp-xs);
-  --user-list-inline-margin: 0;
+.session-button {
+  display: grid;
+  place-content: center;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  margin: 0;
+  background: none;
+  border: none;
+  border-radius: $br-circle;
+  cursor: pointer;
+}
+
+.sessions-menu {
+  position: absolute;
+  top: calc(100% + var(--sp-xs));
+  right: 0;
+  min-width: $sz-224;
+  margin: 0;
+  padding: var(--sp-xs);
+  border-radius: $br-8;
+  background-color: var(--menu-background-color);
+  box-shadow: 0 0 $sz-12 0 var(--menu-shadow-color);
+  z-index: 10;
+}
+
+.session-row-button,
+.own-menu-button {
+  @include t.use-typography("body-small");
+
+  display: flex;
+  align-items: center;
+  gap: var(--sp-s);
+  width: 100%;
+  padding: var(--sp-xs) var(--sp-s);
+  border: none;
+  border-radius: $br-6;
+  background: none;
+  color: var(--menu-foreground-color);
+  text-align: start;
+  cursor: pointer;
+
+  &:hover {
+    background-color: var(--menu-background-color-hover);
+    color: var(--menu-foreground-color-hover);
+  }
+}
+
+.session-row-avatar {
+  flex: none;
+  width: $sz-24;
+  height: $sz-24;
+  border-radius: $br-circle;
+  border: $b-1 solid var(--session-color);
+}
+
+.session-row.followed .session-row-avatar {
+  box-shadow: 0 0 0 $b-2 var(--session-color);
+}
+
+.session-row-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.session-row-page {
+  flex: none;
+  max-width: $sz-96;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-foreground-secondary);
+}
+
+.own-menu-hint {
+  @include t.use-typography("body-small");
+
+  padding: var(--sp-xs) var(--sp-s);
+  color: var(--color-foreground-secondary);
+  max-width: $sz-224;
 }

@@ -23,6 +23,7 @@
    [app.main.data.workspace.edition :as dwe]
    [app.main.data.workspace.layout :as dwly]
    [app.main.data.workspace.libraries :as dwl]
+   [app.main.data.workspace.multiplayer :as dwm]
    [app.main.data.workspace.texts :as dwt]
    [app.main.router :as rt]
    [app.util.globals :refer [global]]
@@ -30,7 +31,6 @@
    [app.util.object :as obj]
    [app.util.rxops :as rxs]
    [beicon.v2.core :as rx]
-   [clojure.set :as set]
    [potok.v2.core :as ptk]))
 
 ;; FIXME: this ns should be renamed to something different
@@ -48,10 +48,19 @@
 (defn initialize
   [team-id file-id]
   (ptk/reify ::initialize
+    ptk/UpdateEvent
+    (update [_ state]
+      (dissoc state
+              :workspace-follow
+              :workspace-spotlight
+              :workspace-spotlight-dismissed
+              :workspace-cursor-chat))
+
     ptk/WatchEvent
     (watch [_ state stream]
       (let [stopper     (rx/filter (ptk/type? ::finalize) stream)
             profile-id (:profile-id state)
+            sent*      (atom nil)
 
             initmsg    [{:type :subscribe-file
                          :file-id file-id
@@ -97,7 +106,19 @@
                                   (rx/filter mse/pointer-event?)
                                   (rx/filter #(= :viewport (mse/get-pointer-source %)))
                                   (rx/pipe (rxs/throttle 50))
-                                  (rx/map #(handle-pointer-send file-id (:pt %)))))
+                                  (rx/map #(handle-pointer-send file-id sent* {:point (:pt %)})))
+
+                             ;; Clicks on the canvas, so the others can see where they land.
+                             (->> stream
+                                  (rx/filter mse/mouse-event?)
+                                  (rx/filter mse/mouse-down-event?)
+                                  (rx/map #(handle-pointer-send file-id sent* {:click-id (uuid/next)})))
+
+                             ;; The view, selection, chat... also change without the
+                             ;; pointer moving; send them when they do, and now and then
+                             ;; anyway so that newcomers and followers catch up.
+                             (->> (rx/interval 100)
+                                  (rx/map #(handle-pointer-send file-id sent* {:only-if-changed? true}))))
 
                             (rx/take-until stopper))]
 
@@ -141,23 +162,31 @@
     :organization-change-sso (dc/handle-organization-change-sso msg)
     nil))
 
+(def ^:private heartbeat-ms 1500)
+
 (defn- handle-pointer-send
-  [file-id point]
+  "Sends this session's pointer and shared state to the others.
+  `sent*` holds the last message sent, so that `:only-if-changed?`
+  ticks stay quiet unless something changed or a heartbeat is due."
+  [file-id sent* {:keys [point click-id only-if-changed?]}]
   (ptk/reify ::handle-pointer-send
     ptk/WatchEvent
     (watch [_ state _]
-      (let [page-id (:current-page-id state)
-            local   (:workspace-local state)
-
-            message {:type :pointer-update
-                     :file-id file-id
-                     :page-id page-id
-                     :zoom (:zoom local)
-                     :zoom-inverse (:zoom-inverse local)
-                     :vbox (:vbox local)
-                     :vport (:vport local)
-                     :position point}]
-        (rx/of (dws/send message))))))
+      (let [prev    @sent*
+            shared  (dwm/local-state state)
+            point   (or point (:position prev))
+            now     (inst-ms (ct/now))
+            due?    (or (not only-if-changed?)
+                        (not= shared (:shared prev))
+                        (> (- now (:at prev 0)) heartbeat-ms))]
+        (when due?
+          (reset! sent* {:shared shared :position point :at now})
+          (rx/of (dws/send (cond-> (assoc shared
+                                          :type :pointer-update
+                                          :file-id file-id
+                                          :position point)
+                             (some? click-id)
+                             (assoc :click-id click-id)))))))))
 
 ;; --- Finalize Websocket
 
@@ -168,70 +197,104 @@
 ;; --- Handle: Presence
 
 (def ^:private presence-palette
-  #{"#f49ef7" ; pink
-    "#75cafc" ; blue
-    "#fdcf79" ; gold
-    "#a9bdfa" ; indigo
-    "#faa6b7" ; red
-    "#cbaaff" ; purple
-    "#f9b489" ; orange
-    "#dee563" ; yellow -> default presence color
-    "#b1e96f" ; lemon
-    })
+  ["#f49ef7" ; pink
+   "#75cafc" ; blue
+   "#fdcf79" ; gold
+   "#a9bdfa" ; indigo
+   "#faa6b7" ; red
+   "#cbaaff" ; purple
+   "#f9b489" ; orange
+   "#dee563" ; yellow
+   "#b1e96f" ; lemon
+   ])
+
+(defn- assign-colors
+  "Gives every session a color that is the same on every client: sessions
+  are visited in id order, each one takes the palette slot its profile
+  hashes to, or the next free one."
+  [presence]
+  (let [n (count presence-palette)]
+    (loop [ids (sort-by str (keys presence)) used #{} presence presence]
+      (if-let [sid (first ids)]
+        (let [start (mod (hash (str (dm/get-in presence [sid :profile-id]))) n)
+              slot  (or (->> (range n)
+                             (map #(mod (+ start %) n))
+                             (remove used)
+                             (first))
+                        start)]
+          (recur (rest ids)
+                 (conj used slot)
+                 (assoc-in presence [sid :color] (nth presence-palette slot))))
+        presence))))
 
 (defn handle-presence
   [{:keys [type session-id profile-id version] :as message}]
-  (letfn [(get-next-color [presence]
-            (let [xfm   (comp (map second)
-                              (map :color)
-                              (remove nil?))
-                  used  (into #{} xfm presence)
-                  avail (set/difference presence-palette used)]
-              ;; If all colores are used we select the default one
-              (or (first avail) "#dee563")))
-
-          (update-color [color presence]
-            (if (some? color)
-              color
-              (get-next-color presence)))
-
-          (update-session [session presence]
+  (letfn [(update-session [session]
             (-> session
                 (assoc :id session-id)
                 (assoc :profile-id profile-id)
                 (assoc :updated-at (ct/now))
                 (assoc :version version)
-                (update :color update-color presence)
                 (assoc :text-color "#000000")))
 
           (update-presence [presence]
             (-> presence
-                (update session-id update-session presence)
+                (update session-id update-session)
                 (d/without-nils)))]
 
     (ptk/reify ::handle-presence
       ptk/UpdateEvent
       (update [_ state]
         (if (or (= :disconnect type) (= :leave-file type))
-          (update state :workspace-presence dissoc session-id)
-          (update state :workspace-presence update-presence))))))
+          (update state :workspace-presence (comp assign-colors #(dissoc % session-id)))
+          (update state :workspace-presence (comp assign-colors update-presence)))))))
 
+
+(defn- update-remote-session
+  [session {:keys [session-id profile-id position zoom zoom-inverse vbox vport page-id
+                   selected spotlight following chat click-id]}]
+  (let [now (ct/now)]
+    (cond-> (assoc session
+                   :id session-id
+                   :profile-id (or (:profile-id session) profile-id)
+                   :zoom zoom
+                   :zoom-inverse zoom-inverse
+                   :vbox vbox
+                   :vport vport
+                   :point position
+                   :selected selected
+                   :spotlight spotlight
+                   :following following
+                   :chat chat
+                   :updated-at now
+                   :page-id page-id)
+
+      (not= position (:point session))
+      (assoc :point-at now)
+
+      (and (some? click-id) (not= click-id (:click-id session)))
+      (assoc :click-id click-id
+             :click-point position
+             :click-at now))))
 
 (defn handle-pointer-update
-  [{:keys [page-id session-id position zoom zoom-inverse vbox vport] :as msg}]
+  [{:keys [session-id] :as msg}]
   (ptk/reify ::handle-pointer-update
+    IDeref
+    (-deref [_] msg)
+
     ptk/UpdateEvent
     (update [_ state]
-      (update-in state [:workspace-presence session-id]
-                 (fn [session]
-                   (assoc session
-                          :zoom zoom
-                          :zoom-inverse zoom-inverse
-                          :vbox vbox
-                          :vport vport
-                          :point position
-                          :updated-at (ct/now)
-                          :page-id page-id))))))
+      (update state :workspace-presence
+              (fn [presence]
+                (cond-> (update presence session-id update-remote-session msg)
+                  ;; First news of this session: it needs a color.
+                  (not (contains? presence session-id))
+                  (assign-colors)))))
+
+    ptk/WatchEvent
+    (watch [_ _ _]
+      (rx/of (dwm/check-spotlight session-id)))))
 
 (def ^:private
   schema:handle-file-change

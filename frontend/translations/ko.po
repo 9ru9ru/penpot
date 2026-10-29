@@ -8352,3 +8352,71 @@ msgstr "자동 저장 버전은 %s일 동안 유지됩니다."
 #, unused
 msgid "workspace.viewport.click-to-close-path"
 msgstr "경로를 닫으려면 클릭하세요"
+
+#: src/app/main/ui/workspace/presence.cljs
+msgid "workspace.presence.on-page"
+msgstr "%s · %s"
+
+#: src/app/main/ui/workspace/presence.cljs
+msgid "workspace.presence.own"
+msgstr "%s (나) — 클릭하면 스포트라이트 메뉴"
+
+#: src/app/main/ui/workspace/presence.cljs
+msgid "workspace.presence.own-spotlighting"
+msgstr "%s (나) — 스포트라이트 중"
+
+#: src/app/main/ui/workspace/presence.cljs
+msgid "workspace.presence.following"
+msgstr "%s — 따라가는 중 (클릭하면 그만 보기)"
+
+#: src/app/main/ui/workspace/presence.cljs
+msgid "workspace.presence.follow"
+msgstr "%s — 클릭하면 이 사람 화면을 따라갑니다"
+
+#: src/app/main/ui/workspace/presence.cljs
+msgid "workspace.presence.you"
+msgstr "%s (나)"
+
+#: src/app/main/ui/workspace/presence.cljs
+msgid "workspace.presence.everyone"
+msgstr "이 파일에 있는 사람 모두 보기"
+
+#: src/app/main/ui/workspace/presence.cljs
+msgid "workspace.presence.start-spotlight"
+msgstr "스포트라이트: 모두가 내 화면을 따라오게 하기"
+
+#: src/app/main/ui/workspace/presence.cljs
+msgid "workspace.presence.stop-spotlight"
+msgstr "스포트라이트 끝내기"
+
+#: src/app/main/ui/workspace/presence.cljs
+msgid "workspace.presence.spotlight-hint"
+msgstr "다른 사람들은 Esc 로 언제든 빠져나갈 수 있어요."
+
+#: src/app/main/ui/workspace/presence.cljs
+msgid "workspace.presence.banner-following"
+msgstr "%s 님의 화면을 보는 중"
+
+#: src/app/main/ui/workspace/presence.cljs
+msgid "workspace.presence.banner-spotlight"
+msgstr "%s 님이 스포트라이트 중"
+
+#: src/app/main/ui/workspace/presence.cljs
+msgid "workspace.presence.banner-stop"
+msgstr "그만 보기 (Esc)"
+
+#: src/app/main/ui/workspace/presence.cljs
+msgid "workspace.presence.banner-spotlighting"
+msgstr "스포트라이트 중 · %s명이 보는 중"
+
+#: src/app/main/ui/workspace/presence.cljs
+msgid "workspace.presence.banner-stop-spotlight"
+msgstr "끝내기"
+
+#: src/app/main/ui/workspace/presence.cljs
+msgid "workspace.presence.chat-placeholder"
+msgstr "말하기… (Enter 보내기, Esc 닫기)"
+
+#: src/app/main/ui/workspace/presence.cljs
+msgid "shortcuts.cursor-chat"
+msgstr "커서 채팅"

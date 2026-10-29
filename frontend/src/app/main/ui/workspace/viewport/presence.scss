@@ -22,3 +22,107 @@
   z-index: 10000;
   pointer-events: none;
 }
+
+.multiuser-layer,
+.multiuser-selection {
+  pointer-events: none;
+}
+
+.chat-bubble {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: fit-content;
+  max-width: 240px;
+  padding: 6px 12px 8px;
+  border-radius: 4px 14px 14px;
+  font-family: "worksans", "vazirmatn", sans-serif;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.chat-name {
+  font-size: deprecated.$fs-11;
+  opacity: 0.85;
+}
+
+.chat-text {
+  font-size: deprecated.$fs-14;
+}
+
+.click-ripple {
+  animation: click-ripple 0.7s ease-out forwards;
+}
+
+@keyframes click-ripple {
+  from {
+    opacity: 0.9;
+    transform: scale(0.3);
+  }
+
+  to {
+    opacity: 0;
+    transform: scale(1.4);
+  }
+}
+
+// Screen-space overlays, positioned over the viewport.
+.follow-frame {
+  position: absolute;
+  inset: 0;
+  border: 3px solid var(--session-color);
+  pointer-events: none;
+  z-index: 11;
+}
+
+.follow-banner {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 6px 6px 12px;
+  border-radius: 0 0 8px 8px;
+  background-color: var(--session-color);
+  color: #000;
+  font-family: "worksans", "vazirmatn", sans-serif;
+  font-size: deprecated.$fs-12;
+  white-space: nowrap;
+  pointer-events: auto;
+  cursor: default;
+}
+
+.follow-stop {
+  padding: 2px 8px;
+  border: none;
+  border-radius: 4px;
+  background-color: rgb(0 0 0 / 0.15);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+
+  &:hover {
+    background-color: rgb(0 0 0 / 0.28);
+  }
+}
+
+.chat-input-wrapper {
+  position: absolute;
+  z-index: 12;
+  pointer-events: auto;
+}
+
+.chat-input {
+  width: 220px;
+  padding: 6px 12px;
+  border: 2px solid var(--session-color);
+  border-radius: 4px 14px 14px;
+  background-color: var(--color-background-primary);
+  color: var(--color-foreground-primary);
+  font-family: "worksans", "vazirmatn", sans-serif;
+  font-size: deprecated.$fs-14;
+  outline: none;
+  cursor: text;
+}

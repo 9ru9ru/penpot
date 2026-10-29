@@ -10,10 +10,12 @@
    [app.common.data :as d]
    [app.common.data.macros :as dm]
    [app.common.types.page :as ctp]
+   [app.config :as cfg]
    [app.main.data.common :as dcm]
    [app.main.data.helpers :as dsh]
    [app.main.data.modal :as modal]
    [app.main.data.workspace :as dw]
+   [app.main.data.workspace.multiplayer :as dwm]
    [app.main.features :as features]
    [app.main.refs :as refs]
    [app.main.store :as st]
@@ -61,6 +63,35 @@
 
 
 ;; --- Page Item
+
+;; --- Who else is on a page
+
+(mf/defc page-presence*
+  {::mf/private true}
+  [{:keys [page-id]}]
+  (let [presence (mf/deref refs/workspace-presence)
+        profiles (mf/deref refs/profiles)
+        own-id   (mf/deref refs/session-id)
+        sessions (->> (vals presence)
+                      (remove #(= own-id (:id %)))
+                      (filter #(= page-id (:page-id %))))]
+    (when (seq sessions)
+      [:div {:class (stl/css :page-presence)
+             :title (->> sessions
+                         (map #(:fullname (get profiles (:profile-id %))))
+                         (str/join ", "))}
+       (for [session (take 3 sessions)]
+         (let [profile (get profiles (:profile-id session))]
+           [:button {:key (dm/str (:id session))
+                     :class (stl/css :page-presence-avatar)
+                     :style {:border-color (:color session)
+                             :background-color (:color session)}
+                     :aria-label (tr "workspace.presence.follow" (:fullname profile))
+                     :on-click (fn [event]
+                                 (dom/stop-propagation event)
+                                 (st/emit! (dwm/toggle-following (:id session))))}
+            [:img {:src (cfg/resolve-profile-photo-url (assoc profile :color (:color session)))
+                   :alt ""}]]))])))
 
 (mf/defc page-item*
   {::mf/private true
@@ -236,6 +267,7 @@
                       :title name
                       :data-testid "page-name"}
                name]
+              [:> page-presence* {:page-id id}]
               [:div {:class (stl/css :page-item-actions)}
                (when (and is-deletable (not read-only?))
                  [:> icon-button* {:variant "action"

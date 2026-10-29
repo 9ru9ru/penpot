@@ -677,6 +677,9 @@
         [:> pixel-overlay/pixel-overlay-wasm* {:viewport-ref viewport-ref
                                                :canvas-ref canvas-ref}])]
 
+     [:> presence/follow-frame* {}]
+     [:> presence/cursor-chat-input* {:vbox vbox :zoom zoom}]
+
      [:canvas {:id "render"
                :data-testid "canvas-wasm-shapes"
                :ref canvas-ref

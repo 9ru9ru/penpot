@@ -309,6 +309,19 @@
 (def workspace-presence
   (l/derived :workspace-presence st/state))
 
+(def session-id
+  (l/derived :session-id st/state))
+
+(def workspace-follow
+  "The session the local view is following, if any."
+  (l/derived :workspace-follow st/state))
+
+(def workspace-spotlight?
+  (l/derived (comp true? :workspace-spotlight) st/state))
+
+(def workspace-cursor-chat
+  (l/derived :workspace-cursor-chat st/state))
+
 (def workspace-page
   "Ref to currently active page on workspace"
   (l/derived dsh/lookup-page st/state))

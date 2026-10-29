@@ -10477,3 +10477,71 @@ msgstr "Try again"
 
 msgid "dashboard.invite-profile-disabled"
 msgstr "You don't have permission to invite people to this team"
+
+#: src/app/main/ui/workspace/presence.cljs
+msgid "workspace.presence.on-page"
+msgstr "%s · %s"
+
+#: src/app/main/ui/workspace/presence.cljs
+msgid "workspace.presence.own"
+msgstr "%s (you) — click for spotlight"
+
+#: src/app/main/ui/workspace/presence.cljs
+msgid "workspace.presence.own-spotlighting"
+msgstr "%s (you) — spotlighting"
+
+#: src/app/main/ui/workspace/presence.cljs
+msgid "workspace.presence.following"
+msgstr "%s — following, click to stop"
+
+#: src/app/main/ui/workspace/presence.cljs
+msgid "workspace.presence.follow"
+msgstr "%s — click to follow their view"
+
+#: src/app/main/ui/workspace/presence.cljs
+msgid "workspace.presence.you"
+msgstr "%s (you)"
+
+#: src/app/main/ui/workspace/presence.cljs
+msgid "workspace.presence.everyone"
+msgstr "Everyone in this file"
+
+#: src/app/main/ui/workspace/presence.cljs
+msgid "workspace.presence.start-spotlight"
+msgstr "Spotlight me: everyone follows my view"
+
+#: src/app/main/ui/workspace/presence.cljs
+msgid "workspace.presence.stop-spotlight"
+msgstr "Stop spotlight"
+
+#: src/app/main/ui/workspace/presence.cljs
+msgid "workspace.presence.spotlight-hint"
+msgstr "The others can leave at any time with Esc."
+
+#: src/app/main/ui/workspace/presence.cljs
+msgid "workspace.presence.banner-following"
+msgstr "Following %s"
+
+#: src/app/main/ui/workspace/presence.cljs
+msgid "workspace.presence.banner-spotlight"
+msgstr "%s is spotlighting"
+
+#: src/app/main/ui/workspace/presence.cljs
+msgid "workspace.presence.banner-stop"
+msgstr "Stop following (Esc)"
+
+#: src/app/main/ui/workspace/presence.cljs
+msgid "workspace.presence.banner-spotlighting"
+msgstr "Spotlighting · %s watching"
+
+#: src/app/main/ui/workspace/presence.cljs
+msgid "workspace.presence.banner-stop-spotlight"
+msgstr "Stop"
+
+#: src/app/main/ui/workspace/presence.cljs
+msgid "workspace.presence.chat-placeholder"
+msgstr "Say something… (Enter sends, Esc closes)"
+
+#: src/app/main/ui/workspace/presence.cljs
+msgid "shortcuts.cursor-chat"
+msgstr "Cursor chat"

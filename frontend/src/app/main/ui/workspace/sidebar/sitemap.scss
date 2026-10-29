@@ -79,6 +79,32 @@
     padding: 0 var(--sp-xs) 0 var(--sp-s);
   }
 
+  .page-presence {
+    display: flex;
+    flex-direction: row-reverse;
+    align-items: center;
+    flex: none;
+    padding-inline: var(--sp-xxs);
+  }
+
+  .page-presence-avatar {
+    display: grid;
+    place-content: center;
+    width: $sz-16;
+    height: $sz-16;
+    padding: 0;
+    margin-inline-start: -4px;
+    border: $b-1 solid;
+    border-radius: $br-circle;
+    overflow: hidden;
+    cursor: pointer;
+
+    img {
+      width: 100%;
+      height: 100%;
+    }
+  }
+
   .page-item-actions {
     block-size: $sz-32;
     display: flex;
