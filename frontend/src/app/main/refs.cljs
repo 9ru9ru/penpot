@@ -231,6 +231,9 @@
 (def current-transform
   (l/derived :transform workspace-local))
 
+(def smart-selection
+  (l/derived :smart-selection workspace-local))
+
 (def options-mode
   (l/derived :options-mode workspace-local))
 

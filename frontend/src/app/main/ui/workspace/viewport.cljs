@@ -53,6 +53,7 @@
    [app.main.ui.workspace.viewport.rulers :as rulers]
    [app.main.ui.workspace.viewport.scroll-bars :as scroll-bars]
    [app.main.ui.workspace.viewport.selection :as selection]
+   [app.main.ui.workspace.viewport.smart-selection :refer [smart-selection*]]
    [app.main.ui.workspace.viewport.snap-distances :as snap-distances]
    [app.main.ui.workspace.viewport.snap-points :as snap-points]
    [app.main.ui.workspace.viewport.top-bar :refer [grid-edition-bar*
@@ -724,11 +725,14 @@
                                 :state edit-path-state
                                 :zoom zoom}]
               (when selected-shapes
-                [:> selection/handlers*
-                 {:selected selected
-                  :shapes selected-shapes
-                  :zoom zoom
-                  :disabled (or drawing-tool @space?)}])))
+                [:*
+                 [:> selection/handlers*
+                  {:selected selected
+                   :shapes selected-shapes
+                   :zoom zoom
+                   :disabled (or drawing-tool @space?)}]
+                 (when-not (or drawing-tool show-prototypes? read-only?)
+                   [:> smart-selection* {:shapes selected-shapes :zoom zoom}])])))
 
           (when show-prototypes?
             [:> interactions/interactions*

@@ -17,7 +17,7 @@
    [beicon.v2.core :as rx]
    [potok.v2.core :as ptk]))
 
-(defn- bounds
+(defn bounds
   [shape]
   (-> shape :points grc/points->rect))
 
@@ -48,27 +48,57 @@
   [gaps]
   (max 0 (mth/round (or (median gaps) 0))))
 
-(defn layout
-  "New top-left corner of each rect ({:id :x :y :width :height}),
-  keeping the rows and columns they are in now."
+(defn arrange
+  "Reads rects ({:id :x :y :width :height}) as rows, and the spacing
+  between neighbours: {:rows [[rect ...] ...] :hgap n :vgap n}."
   [rects]
-  (let [rows     (group-rows rects)
-        ncols    (apply max (map count rows))
-        col-w    (mapv (fn [c] (apply max 0 (keep #(some-> (get % c) :width) rows))) (range ncols))
-        row-h    (mapv (fn [row] (apply max (map :height row))) rows)
-        hgap     (spacing (for [row rows [a b] (partition 2 1 row)]
-                            (- (:x b) (+ (:x a) (:width a)))))
-        vgap     (spacing (for [[ra rb] (partition 2 1 rows)]
-                            (- (apply min (map :y rb))
-                               (apply max (map #(+ (:y %) (:height %)) ra)))))
-        x0       (apply min (map :x rects))
-        y0       (apply min (map :y rects))
-        col-x    (reductions + x0 (map #(+ % hgap) col-w))
-        row-y    (reductions + y0 (map #(+ % vgap) row-h))]
+  (let [rows (group-rows rects)]
+    {:rows rows
+     :hgap (spacing (for [row rows [a b] (partition 2 1 row)]
+                      (- (:x b) (+ (:x a) (:width a)))))
+     :vgap (spacing (for [[ra rb] (partition 2 1 rows)]
+                      (- (apply min (map :y rb))
+                         (apply max (map #(+ (:y %) (:height %)) ra)))))}))
+
+(defn grid
+  "Where the columns and rows of an arrangement start, and how big they
+  are: {:col-x :col-w :row-y :row-h}."
+  [{:keys [rows hgap vgap]}]
+  (let [rects (apply concat rows)
+        ncols (apply max (map count rows))
+        col-w (mapv (fn [c] (apply max 0 (keep #(some-> (get % c) :width) rows))) (range ncols))
+        row-h (mapv (fn [row] (apply max (map :height row))) rows)
+        x0    (apply min (map :x rects))
+        y0    (apply min (map :y rects))]
+    {:col-x (vec (reductions + x0 (map #(+ % hgap) col-w)))
+     :col-w col-w
+     :row-y (vec (reductions + y0 (map #(+ % vgap) row-h)))
+     :row-h row-h}))
+
+(defn positions
+  "New top-left corner of each rect of an arrangement: {id {:x :y}}."
+  [{:keys [rows] :as arrangement}]
+  (let [{:keys [col-x row-y]} (grid arrangement)]
     (into {}
           (for [[ri row] (d/enumerate rows)
                 [ci r]   (d/enumerate row)]
             [(:id r) {:x (nth col-x ci) :y (nth row-y ri)}]))))
+
+(defn layout
+  "New top-left corner of each rect, keeping the rows and columns they
+  are in now."
+  [rects]
+  (positions (arrange rects)))
+
+(defn tidy?
+  "True when the rects already sit where tidy up would put them."
+  [rects]
+  (let [pos (layout rects)]
+    (every? (fn [{:keys [id x y]}]
+              (let [p (get pos id)]
+                (and (< (mth/abs (- x (:x p))) 0.5)
+                     (< (mth/abs (- y (:y p))) 0.5))))
+            rects)))
 
 (defn tidy-up-selected
   []
