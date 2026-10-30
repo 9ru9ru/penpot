@@ -22,3 +22,23 @@
                       :class (stl/css :copy-btn-title)}]]
 
    [:div {:class (stl/css :annotation-content)} content]])
+
+(mf/defc dev-note*
+  "The developer note of a layer and, for boards, \"ready for dev\"."
+  [{:keys [shape]}]
+  (let [note   (:dev-annotation shape)
+        ready? (true? (:dev-ready shape))]
+    (when (or note ready?)
+      [:div {:class (stl/css :attributes-block)}
+       [:> title-bar* {:collapsable false
+                       :title       (tr "workspace.options.dev-note")
+                       :class       (stl/css :title-spacing-annotation)}
+        (when note
+          [:> copy-button* {:data note
+                            :class (stl/css :copy-btn-title)}])]
+       (when ready?
+         [:div {:class (stl/css :dev-ready-badge)
+                :data-testid "dev-ready-badge"}
+          (tr "workspace.options.dev-ready")])
+       (when note
+         [:div {:class (stl/css :annotation-content)} note])])))

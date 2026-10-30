@@ -15,6 +15,7 @@
    [app.common.types.tokens-lib :as ctob]
    [app.main.data.style-dictionary :as sd]
    [app.main.refs :as refs]
+   [app.main.ui.inspect.annotation :refer [dev-note*]]
    [app.main.ui.inspect.exports :as exports]
    [app.main.ui.inspect.styles.panels.blur :refer [blur-panel*]]
    [app.main.ui.inspect.styles.panels.fill :refer [fill-panel*]]
@@ -148,6 +149,10 @@
                                     :styles-tab-workspace (= from :workspace))
                :aria-label (tr "labels.styles")}
      [:ol
+      ;;  HANDOFF NOTE
+      (when (= (count shapes) 1)
+        [:li {:class (stl/css :dev-note-row)}
+         [:> dev-note* {:shape first-shape}]])
       ;;  TOKENS PANEL
       (when (or (seq active-themes) (seq active-sets))
         [:li

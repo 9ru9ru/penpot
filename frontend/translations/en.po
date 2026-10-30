@@ -10829,3 +10829,15 @@ msgstr "%s font families added to the team"
 #: src/app/main/ui/workspace/local_fonts.cljs
 msgid "workspace.local-fonts.upload-error"
 msgstr "Could not upload the fonts"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/dev_note.cljs
+msgid "workspace.options.dev-note"
+msgstr "Developer note"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/dev_note.cljs
+msgid "workspace.options.dev-note-placeholder"
+msgstr "Leave a note for developers…"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/dev_note.cljs
+msgid "workspace.options.dev-ready"
+msgstr "Ready for dev"

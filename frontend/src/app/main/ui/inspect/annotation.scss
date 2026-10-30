@@ -5,6 +5,8 @@
 // Copyright (c) KALEIDOS INC Sucursal en España SL
 
 @use "refactor/common-refactor.scss" as deprecated;
+@use "ds/_borders.scss" as *;
+@use "ds/typography.scss" as t;
 
 .attributes-block {
   @include deprecated.flex-column;
@@ -22,4 +24,15 @@
 
 .copy-btn-title {
   max-width: deprecated.$s-28;
+}
+
+.dev-ready-badge {
+  @include t.use-typography("body-small");
+
+  display: inline-block;
+  margin-block-end: var(--sp-s);
+  padding: var(--sp-xxs) var(--sp-s);
+  border-radius: $br-8;
+  background-color: var(--color-background-success);
+  color: var(--color-accent-success);
 }

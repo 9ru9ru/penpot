@@ -10526,3 +10526,15 @@ msgstr "폰트 %s종을 팀에 추가했습니다"
 #: src/app/main/ui/workspace/local_fonts.cljs
 msgid "workspace.local-fonts.upload-error"
 msgstr "폰트를 올리지 못했습니다"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/dev_note.cljs
+msgid "workspace.options.dev-note"
+msgstr "개발 노트"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/dev_note.cljs
+msgid "workspace.options.dev-note-placeholder"
+msgstr "개발자에게 남길 메모…"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/dev_note.cljs
+msgid "workspace.options.dev-ready"
+msgstr "개발 준비 완료"

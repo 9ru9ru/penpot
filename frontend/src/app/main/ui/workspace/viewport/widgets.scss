@@ -84,3 +84,9 @@
 .button-add-icon {
   stroke: var(--button-add-icon-color);
 }
+
+.dev-ready-mark {
+  margin-inline-end: 0.25rem;
+  color: var(--color-accent-success);
+  font-weight: 700;
+}

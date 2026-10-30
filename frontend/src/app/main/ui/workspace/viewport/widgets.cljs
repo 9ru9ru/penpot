@@ -27,6 +27,7 @@
    [app.main.ui.workspace.viewport.utils :as vwu]
    [app.util.debug :as dbg]
    [app.util.dom :as dom]
+   [app.util.i18n :refer [tr]]
    [app.util.keyboard :as kbd]
    [app.util.timers :as ts]
    [cuerdas.core :as str]
@@ -253,6 +254,11 @@
                  :on-context-menu on-context-menu
                  :on-pointer-enter on-pointer-enter
                  :on-pointer-leave on-pointer-leave}
+           (when (:dev-ready frame)
+             [:span {:class (stl/css :dev-ready-mark)
+                     :data-testid "dev-ready-mark"
+                     :title (tr "workspace.options.dev-ready")}
+              "✓"])
            (if is-show-id
              (dm/str (:id frame) " - " (:name frame))
              (:name frame))]])])))

@@ -207,6 +207,9 @@
    [:hidden {:optional true} :boolean]
    [:masked-group {:optional true} :boolean]
    [:mask-type {:optional true} [::sm/one-of #{:alpha :luminance}]]
+   ;; Handoff: a note for developers, and (boards) "ready for dev".
+   [:dev-annotation {:optional true} :string]
+   [:dev-ready {:optional true} :boolean]
    [:fills {:optional true} schema:fills]
    [:proportion {:optional true} ::sm/safe-number]
    [:proportion-lock {:optional true} :boolean]
@@ -433,7 +436,7 @@
 (def ^:private allowed-shape-attrs
   #{:page-id :component-id :component-file :component-root :main-instance
     :remote-synced :shape-ref :touched :blocked :collapsed :locked
-    :hidden :masked-group :mask-type :fills :proportion :proportion-lock :constraints-h
+    :hidden :masked-group :mask-type :dev-annotation :dev-ready :fills :proportion :proportion-lock :constraints-h
     :constraints-v :fixed-scroll :r1 :r2 :r3 :r4 :rotation :opacity :grids :exports
     :strokes :blend-mode :interactions :shadow :blur :background-blur :grow-type :applied-tokens
     :embed :plugin-data})

@@ -26,6 +26,7 @@
    [app.main.ui.workspace.sidebar.options.menus.align :refer [align-options*]]
    [app.main.ui.workspace.sidebar.options.menus.bool :refer [bool-options*]]
    [app.main.ui.workspace.sidebar.options.menus.component :refer [component-menu*]]
+   [app.main.ui.workspace.sidebar.options.menus.dev-note :refer [dev-note-menu*]]
    [app.main.ui.workspace.sidebar.options.menus.grid-cell :as grid-cell]
    [app.main.ui.workspace.sidebar.options.menus.interactions :refer [interactions-menu*]]
    [app.main.ui.workspace.sidebar.options.menus.layout-container :as layout-container]
@@ -63,16 +64,19 @@
 
         props      (mf/spread-props props {:shape shape :file-id file-id :page-id page-id :libraries libraries})]
 
-    (case shape-type
-      :frame   [:> frame/options* props]
-      :group   [:> group/options* props]
-      :text    [:> text/options* {:shape shape :file-id file-id :page-id page-id :libraries libraries}]
-      :rect    [:> rect/options* {:shape shape :file-id file-id :page-id page-id}]
-      :circle  [:> circle/options* {:shape shape :file-id file-id :page-id page-id}]
-      :path    [:> path/options* {:shape shape :file-id file-id :page-id page-id}]
-      :svg-raw [:> svg-raw/options* {:shape shape :file-id file-id :page-id page-id}]
-      :bool    [:> bool/options* {:shape shape :file-id file-id :page-id page-id}]
-      nil)))
+    [:*
+     (case shape-type
+       :frame   [:> frame/options* props]
+       :group   [:> group/options* props]
+       :text    [:> text/options* {:shape shape :file-id file-id :page-id page-id :libraries libraries}]
+       :rect    [:> rect/options* {:shape shape :file-id file-id :page-id page-id}]
+       :circle  [:> circle/options* {:shape shape :file-id file-id :page-id page-id}]
+       :path    [:> path/options* {:shape shape :file-id file-id :page-id page-id}]
+       :svg-raw [:> svg-raw/options* {:shape shape :file-id file-id :page-id page-id}]
+       :bool    [:> bool/options* {:shape shape :file-id file-id :page-id page-id}]
+       nil)
+     (when shape
+       [:> dev-note-menu* {:shape shape}])]))
 
 (mf/defc shape-options*
   {::mf/wrap [#(mf/throttle % 200)]

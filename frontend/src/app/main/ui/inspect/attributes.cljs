@@ -11,7 +11,7 @@
    [app.common.types.component :as ctc]
    [app.common.types.components-list :as ctkl]
    [app.main.ui.hooks :as hooks]
-   [app.main.ui.inspect.annotation :refer [annotation*]]
+   [app.main.ui.inspect.annotation :refer [annotation* dev-note*]]
    [app.main.ui.inspect.attributes.blur :refer [blur-panel*]]
    [app.main.ui.inspect.attributes.fill :refer [fill-panel*]]
    [app.main.ui.inspect.attributes.geometry :refer [geometry-panel*]]
@@ -59,6 +59,8 @@
 
     [:div {:class (stl/css-case :element-options true
                                 :workspace-element-options (= from :workspace))}
+     (when (= (count shapes) 1)
+       [:> dev-note* {:shape first-shape}])
      (for [[idx option] (map-indexed vector options)]
        [:> (case option
              :geometry         geometry-panel*
