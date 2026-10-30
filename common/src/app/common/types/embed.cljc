@@ -28,7 +28,9 @@
 (def iframe-kinds #{:youtube :vimeo})
 
 (def schema:embed
-  [:multi {:title "Embed" :dispatch :kind}
+  [:multi {:title "Embed"
+           :dispatch :kind
+           :decode/json #(update % :kind keyword)}
    [:youtube
     [:map {:title "YoutubeEmbed"}
      [:kind [:= :youtube]]

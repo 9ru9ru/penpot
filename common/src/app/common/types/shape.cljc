@@ -208,7 +208,7 @@
    [:masked-group {:optional true} :boolean]
    [:mask-type {:optional true} [::sm/one-of #{:alpha :luminance}]]
    ;; Handoff: a note for developers, and (boards) "ready for dev".
-   [:dev-annotation {:optional true} :string]
+   [:dev-annotation {:optional true} [:string {:min 1}]]
    [:dev-ready {:optional true} :boolean]
    [:fills {:optional true} schema:fills]
    [:proportion {:optional true} ::sm/safe-number]
