@@ -51,7 +51,32 @@
      :selected  (into [] (take max-shared-selection) (:selected local))
      :spotlight (true? (:workspace-spotlight state))
      :following (dm/get-in state [:workspace-follow :session-id])
-     :chat      (chat-payload (:workspace-cursor-chat state))}))
+     :chat      (chat-payload (:workspace-cursor-chat state))
+     :comments-rev (get state :workspace-comments-rev 0)}))
+
+;; --- Comments
+
+(def comment-change-events
+  "Events after which the others should fetch the comments again."
+  #{:app.main.data.comments/create-comment
+    :app.main.data.comments/update-comment
+    :app.main.data.comments/delete-comment
+    :app.main.data.comments/toggle-reaction
+    :app.main.data.comments/created-thread-on-workspace
+    :app.main.data.comments/delete-comment-thread-on-workspace
+    :app.main.data.comments/update-comment-thread-status
+    :app.main.data.comments/update-comment-thread
+    :app.main.data.comments/update-comment-thread-frame})
+
+(defn bump-comments-rev
+  "Tells the others (with the next pointer message) that the comments
+  changed, so they fetch them again: comments and reactions show up for
+  everyone within a second or two."
+  []
+  (ptk/reify ::bump-comments-rev
+    ptk/UpdateEvent
+    (update [_ state]
+      (update state :workspace-comments-rev (fnil inc 0)))))
 
 ;; --- Following
 

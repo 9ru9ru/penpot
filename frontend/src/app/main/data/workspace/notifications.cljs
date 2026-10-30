@@ -13,6 +13,7 @@
    [app.common.time :as ct]
    [app.common.uuid :as uuid]
    [app.main.data.changes :as dch]
+   [app.main.data.comments :as dcm]
    [app.main.data.common :as dc]
    [app.main.data.helpers :as dsh]
    [app.main.data.modal :as modal]
@@ -118,7 +119,14 @@
                              ;; pointer moving; send them when they do, and now and then
                              ;; anyway so that newcomers and followers catch up.
                              (->> (rx/interval 100)
-                                  (rx/map #(handle-pointer-send file-id sent* {:only-if-changed? true}))))
+                                  (rx/map #(handle-pointer-send file-id sent* {:only-if-changed? true})))
+
+                             ;; After a comment change (the request has usually
+                             ;; finished by then) tell the others to refresh.
+                             (->> stream
+                                  (rx/filter #(contains? dwm/comment-change-events (ptk/type %)))
+                                  (rx/debounce 800)
+                                  (rx/map (fn [_] (dwm/bump-comments-rev)))))
 
                             (rx/take-until stopper))]
 
@@ -252,7 +260,7 @@
 
 (defn- update-remote-session
   [session {:keys [session-id profile-id position zoom zoom-inverse vbox vport page-id
-                   selected spotlight following chat click-id]}]
+                   selected spotlight following chat click-id comments-rev]}]
   (let [now (ct/now)]
     (cond-> (assoc session
                    :id session-id
@@ -266,6 +274,7 @@
                    :spotlight spotlight
                    :following following
                    :chat chat
+                   :comments-rev comments-rev
                    :updated-at now
                    :page-id page-id)
 
@@ -278,23 +287,34 @@
              :click-at now))))
 
 (defn handle-pointer-update
-  [{:keys [session-id] :as msg}]
-  (ptk/reify ::handle-pointer-update
-    IDeref
-    (-deref [_] msg)
+  [{:keys [session-id comments-rev] :as msg}]
+  (let [comments-changed* (volatile! false)]
+    (ptk/reify ::handle-pointer-update
+      IDeref
+      (-deref [_] msg)
 
-    ptk/UpdateEvent
-    (update [_ state]
-      (update state :workspace-presence
-              (fn [presence]
-                (cond-> (update presence session-id update-remote-session msg)
-                  ;; First news of this session: it needs a color.
-                  (not (contains? presence session-id))
-                  (assign-colors)))))
+      ptk/UpdateEvent
+      (update [_ state]
+        (let [seen (dm/get-in state [:workspace-presence session-id :comments-rev])]
+          (vreset! comments-changed* (and (some? seen) (some? comments-rev) (not= seen comments-rev))))
+        (update state :workspace-presence
+                (fn [presence]
+                  (cond-> (update presence session-id update-remote-session msg)
+                    ;; First news of this session: it needs a color.
+                    (not (contains? presence session-id))
+                    (assign-colors)))))
 
-    ptk/WatchEvent
-    (watch [_ _ _]
-      (rx/of (dwm/check-spotlight session-id)))))
+      ptk/WatchEvent
+      (watch [_ state _]
+        (rx/concat
+         (rx/of (dwm/check-spotlight session-id))
+         (when @comments-changed*
+           (let [file-id   (:current-file-id state)
+                 thread-id (dm/get-in state [:comments-local :open])]
+             (rx/concat
+              (rx/of (dcm/refresh-comment-threads file-id))
+              (when thread-id
+                (rx/of (dcm/retrieve-comments thread-id)))))))))))
 
 (def ^:private
   schema:handle-file-change

@@ -410,6 +410,20 @@
               state
               threads))))
 
+(defn refresh-comment-threads
+  "Fetches the threads again without clearing them first, so the
+  bubbles on the canvas don't blink."
+  [file-id]
+  (ptk/reify ::refresh-comment-threads
+    ptk/WatchEvent
+    (watch [_ state _]
+      (let [share-id (-> state :viewer-local :share-id)]
+        (->> (rp/cmd! :get-comment-threads {:file-id file-id :share-id share-id})
+             (rx/mapcat (fn [threads]
+                          (rx/of #(assoc % :comment-threads {})
+                                 (comment-threads-fetched threads))))
+             (rx/catch (fn [_] (rx/empty))))))))
+
 (defn retrieve-comment-threads
   [file-id]
   (ptk/reify ::retrieve-comment-threads
