@@ -112,6 +112,10 @@
 
                      :toggle-overlay "M-5 -5 h7 v7 h-7 z M2 -2 h3.5 v7 h-7 v-2.5"
 
+                     :swap-overlay "M-5 -5 h7 v7 h-7 z M2 -2 h3.5 v7 h-7 v-2.5"
+
+                     :scroll-to "M 0 -6.5 L 0 5.5 M -0.715 6.715 L 6.5 -0.5 M 0.715 6.715 L -6.635 -0.365"
+
                      :close-overlay "M -5 -5 L 5 5 M -5 5 L 5 -5"
 
                      :prev-screen (case arrow-dir

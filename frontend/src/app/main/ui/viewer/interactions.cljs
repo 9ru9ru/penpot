@@ -82,7 +82,8 @@
 
         non-delay-interactions
         (->> (:interactions frame)
-             (filterv #(not= (:event-type %) :after-delay)))
+             ;; The fixed copy of the board must not run these a second time.
+             (filterv #(not (contains? #{:after-delay :key-press} (:event-type %)))))
 
         fixed-frame
         (-> frame

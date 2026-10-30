@@ -8,6 +8,7 @@
   (:require-macros [app.main.style :as stl])
   (:require
    [app.common.data :as d]
+   [app.common.data.macros :as dm]
    [app.common.files.helpers :as cfh]
    [app.common.types.page :as ctp]
    [app.common.types.shape-tree :as ctt]
@@ -41,11 +42,27 @@
    ;; :mouse-press (tr "workspace.options.interaction-while-pressing")
    :mouse-enter (tr "workspace.options.interaction-mouse-enter")
    :mouse-leave (tr "workspace.options.interaction-mouse-leave")
-   :after-delay (tr "workspace.options.interaction-after-delay")})
+   :after-delay (tr "workspace.options.interaction-after-delay")
+   :key-press   (tr "workspace.options.interaction-key-press")})
+
+(defn- key-label
+  "How a KeyboardEvent.key value is shown."
+  [key]
+  (case key
+    "ArrowRight" "→"
+    "ArrowLeft"  "←"
+    "ArrowUp"    "↑"
+    "ArrowDown"  "↓"
+    " "          "Space"
+    "Escape"     "Esc"
+    (if (= 1 (count key)) (str/upper key) key)))
 
 (defn- event-type-name
   [interaction]
-  (get (event-type-names) (:event-type interaction) "--"))
+  (let [name (get (event-type-names) (:event-type interaction) "--")]
+    (if (ctsi/has-key? interaction)
+      (dm/str name " " (key-label (:key interaction "")))
+      name)))
 
 (defn- action-summary
   [interaction destination]
@@ -60,7 +77,21 @@
                         (get destination :name (tr "workspace.options.interaction-self")))
     :prev-screen    (tr "workspace.options.interaction-prev-screen")
     :open-url       (tr "workspace.options.interaction-open-url")
+    :swap-overlay   (tr "workspace.options.interaction-swap-overlay-dest"
+                        (get destination :name (tr "workspace.options.interaction-none")))
+    :scroll-to      (tr "workspace.options.interaction-scroll-to-dest"
+                        (get destination :name (tr "workspace.options.interaction-none")))
     "--"))
+
+(defn- get-layers-options
+  "Layers of the board the shape is in, for scroll to."
+  [objects shape]
+  (let [root-id (cfh/get-shape-id-root-frame objects (:id shape))]
+    (->> (cfh/get-children objects root-id)
+         (remove #(= (:id %) (:id shape)))
+         (map (fn [layer]
+                {:value (str (:id layer))
+                 :label (:name layer)})))))
 
 (defn- get-frames-options
   [frames shape]
@@ -218,6 +249,17 @@
          (fn [value]
            (update-interaction index #(ctsi/set-delay % value))))
 
+        change-key
+        (mf/use-fn
+         (mf/deps index update-interaction)
+         (fn [event]
+           (let [key (.-key ^js event)]
+             (when-not (contains? #{"Shift" "Control" "Alt" "Meta" "Tab"} key)
+               (dom/prevent-default event)
+               (dom/stop-propagation event)
+               (update-interaction index #(ctsi/set-key % key))
+               (dom/blur! (dom/get-target event))))))
+
         change-destination
         (mf/use-fn
          (mf/deps index update-interaction)
@@ -348,22 +390,28 @@
                                   {:value :mouse-enter :label (tr "workspace.options.interaction-mouse-enter")}
                                   {:value :mouse-leave :label (tr "workspace.options.interaction-mouse-leave")}]
                                  (cond-> (cfh/frame-shape? shape)
-                                   (conj {:value :after-delay :label (tr "workspace.options.interaction-after-delay")})))
+                                   (conj {:value :after-delay :label (tr "workspace.options.interaction-after-delay")}))
+                                 (conj {:value :key-press :label (tr "workspace.options.interaction-key-press")}))
 
         action-type-options [{:value :navigate       :label (tr "workspace.options.interaction-navigate-to")}
                              {:value :open-overlay   :label (tr "workspace.options.interaction-open-overlay")}
                              {:value :toggle-overlay :label (tr "workspace.options.interaction-toggle-overlay")}
                              {:value :close-overlay  :label (tr "workspace.options.interaction-close-overlay")}
+                             {:value :swap-overlay   :label (tr "workspace.options.interaction-swap-overlay")}
+                             {:value :scroll-to      :label (tr "workspace.options.interaction-scroll-to")}
                              {:value :prev-screen    :label (tr "workspace.options.interaction-prev-screen")}
                              {:value :open-url       :label (tr "workspace.options.interaction-open-url")}]
 
-        frames-opts         (get-frames-options frames shape)
+        frames-opts         (if (= (:action-type interaction) :scroll-to)
+                              (get-layers-options objects shape)
+                              (get-frames-options frames shape))
 
         default-opts        [(if (= (:action-type interaction) :close-overlay)
                                {:value "" :label (tr "workspace.options.interaction-self")}
                                {:value "" :label (tr "workspace.options.interaction-none")})]
         destination-options
         (mf/with-memo [frames-opts default-opts]
+          ;; frames-opts changes with the action type
           (let [sorted-frames-opts (sort-by :label frames-opts)]
             (d/concat-vec default-opts sorted-frames-opts)))
 
@@ -445,6 +493,20 @@
                                 :property (tr "workspace.options.interaction-ms")
                                 :on-change change-delay
                                 :value (:delay interaction)}]]])
+
+        ;; Key
+        (when (ctsi/has-key? interaction)
+          [:div {:class (stl/css :interaction-row)}
+           [:div {:class (stl/css :interaction-row-label)}
+            [:div {:class (stl/css :interaction-row-name)}
+             (tr "workspace.options.interaction-key")]]
+           [:div {:class (stl/css :interaction-row-input)}
+            [:input {:class (stl/css :interaction-key-input)
+                     :read-only true
+                     :data-testid "interaction-key"
+                     :title (tr "workspace.options.interaction-key-hint")
+                     :value (key-label (:key interaction ""))
+                     :on-key-down change-key}]]])
 
         ;; Action select
         [:div {:class (stl/css :interaction-row)}

@@ -10446,3 +10446,31 @@ msgstr "루미넌스 (밝기)"
 #: src/app/main/ui/workspace/colorpicker/gradients.cljs
 msgid "workspace.gradients.angular"
 msgstr "각도형 그래디언트"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/interactions.cljs
+msgid "workspace.options.interaction-key-press"
+msgstr "키 누름"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/interactions.cljs
+msgid "workspace.options.interaction-key"
+msgstr "키"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/interactions.cljs
+msgid "workspace.options.interaction-key-hint"
+msgstr "여기를 누른 뒤 키를 누르세요"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/interactions.cljs
+msgid "workspace.options.interaction-swap-overlay"
+msgstr "오버레이 교체"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/interactions.cljs
+msgid "workspace.options.interaction-swap-overlay-dest"
+msgstr "오버레이 교체: %s"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/interactions.cljs
+msgid "workspace.options.interaction-scroll-to"
+msgstr "스크롤 이동"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/interactions.cljs
+msgid "workspace.options.interaction-scroll-to-dest"
+msgstr "스크롤 이동: %s"

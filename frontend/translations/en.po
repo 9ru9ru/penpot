@@ -10749,3 +10749,31 @@ msgstr "Luminance (brightness)"
 #: src/app/main/ui/workspace/colorpicker/gradients.cljs
 msgid "workspace.gradients.angular"
 msgstr "Angular gradient"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/interactions.cljs
+msgid "workspace.options.interaction-key-press"
+msgstr "Key press"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/interactions.cljs
+msgid "workspace.options.interaction-key"
+msgstr "Key"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/interactions.cljs
+msgid "workspace.options.interaction-key-hint"
+msgstr "Click here and press the key"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/interactions.cljs
+msgid "workspace.options.interaction-swap-overlay"
+msgstr "Swap overlay"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/interactions.cljs
+msgid "workspace.options.interaction-swap-overlay-dest"
+msgstr "Swap overlay: %s"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/interactions.cljs
+msgid "workspace.options.interaction-scroll-to"
+msgstr "Scroll to"
+
+#: src/app/main/ui/workspace/sidebar/options/menus/interactions.cljs
+msgid "workspace.options.interaction-scroll-to-dest"
+msgstr "Scroll to: %s"

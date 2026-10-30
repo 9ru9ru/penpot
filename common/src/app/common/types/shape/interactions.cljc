@@ -34,7 +34,8 @@
     :mouse-over
     :mouse-enter
     :mouse-leave
-    :after-delay})
+    :after-delay
+    :key-press})
 
 (def action-types
   #{:navigate
@@ -42,7 +43,9 @@
     :toggle-overlay
     :close-overlay
     :prev-screen
-    :open-url})
+    :open-url
+    :swap-overlay
+    :scroll-to})
 
 (def overlay-positioning-types
   #{:manual
@@ -184,7 +187,9 @@
    [:close-click-outside {:optional true} :boolean]
    [:background-overlay {:optional true} :boolean]
    [:position-relative-to {:optional true} [:maybe ::sm/uuid]]
-   [:url {:optional true} :string]])
+   [:url {:optional true} :string]
+   ;; For :key-press, the KeyboardEvent.key that fires it.
+   [:key {:optional true} :string]])
 
 (def schema:navigate-interaction
   [:map {:title "NavigateInteraction"}
@@ -218,6 +223,26 @@
    [:animation {:optional true} schema:animation]
    [:position-relative-to {:optional true} [:maybe ::sm/uuid]]])
 
+(def schema:swap-overlay-interaction
+  [:map {:title "SwapOverlayInteraction"}
+   [:action-type [:= :swap-overlay]]
+   [:event-type [::sm/one-of event-types]]
+   [:overlay-position {:optional true} ::gpt/point]
+   [:overlay-pos-type {:optional true} [::sm/one-of overlay-positioning-types]]
+   [:destination {:optional true} [:maybe ::sm/uuid]]
+   [:close-click-outside {:optional true} :boolean]
+   [:background-overlay {:optional true} :boolean]
+   [:animation {:optional true} schema:animation]
+   [:position-relative-to {:optional true} [:maybe ::sm/uuid]]])
+
+(def schema:scroll-to-interaction
+  "Scrolls the screen so the destination layer (inside the same board)
+  comes into view."
+  [:map {:title "ScrollToInteraction"}
+   [:action-type [:= :scroll-to]]
+   [:event-type [::sm/one-of event-types]]
+   [:destination {:optional true} [:maybe ::sm/uuid]]])
+
 (def schema:close-overlay-interaction
   [:map {:title "CloseOverlayInteraction"}
    [:action-type [:= :close-overlay]]
@@ -244,7 +269,9 @@
                                 (sg/generator schema:close-overlay-interaction)
                                 (sg/generator schema:toggle-overlay-interaction)
                                 (sg/generator schema:prev-scren-interaction)
-                                (sg/generator schema:open-url-interaction))}
+                                (sg/generator schema:open-url-interaction)
+                                (sg/generator schema:swap-overlay-interaction)
+                                (sg/generator schema:scroll-to-interaction))}
    [:and
     schema:generic-interaction-attrs
     [:multi {:dispatch :action-type :title "InteractionAttrs"}
@@ -253,7 +280,9 @@
      [:toggle-overlay schema:toggle-overlay-interaction]
      [:close-overlay schema:close-overlay-interaction]
      [:prev-screen schema:prev-scren-interaction]
-     [:open-url schema:open-url-interaction]]]])
+     [:open-url schema:open-url-interaction]
+     [:swap-overlay schema:swap-overlay-interaction]
+     [:scroll-to schema:scroll-to-interaction]]]])
 
 (def check-interaction
   (sm/check-fn schema:interaction))
@@ -270,6 +299,8 @@
    :preserve-scroll false})
 
 (def default-delay 600)
+
+(def default-key "ArrowRight")
 
 ;; -- Helpers for interaction
 
@@ -295,6 +326,11 @@
              :event-type event-type
              :delay (get interaction :delay default-delay))
 
+      :key-press
+      (assoc interaction
+             :event-type event-type
+             :key (get interaction :key default-key))
+
       (assoc interaction
              :event-type event-type))))
 
@@ -314,7 +350,7 @@
                    :destination (get interaction :destination)
                    :preserve-scroll (get interaction :preserve-scroll false))
 
-            (:open-overlay :toggle-overlay)
+            (:open-overlay :toggle-overlay :swap-overlay)
             (let [overlay-pos-type (get interaction :overlay-pos-type :center)
                   overlay-position (get interaction :overlay-position (gpt/point 0 0))]
               (assoc interaction
@@ -322,7 +358,7 @@
                      :overlay-pos-type overlay-pos-type
                      :overlay-position overlay-position))
 
-            :close-overlay
+            (:close-overlay :scroll-to)
             (assoc interaction
                    :action-type action-type
                    :destination (get interaction :destination))
@@ -356,13 +392,26 @@
 
   (assoc interaction :delay delay))
 
+(defn has-key?
+  [interaction]
+  (= (:event-type interaction) :key-press))
+
+(defn set-key
+  [interaction key]
+  (assert (check-interaction interaction))
+  (assert (string? key))
+  (assert (has-key? interaction)
+          "expected compatible interaction event type")
+
+  (assoc interaction :key key))
+
 ;; FIXME: rename to proper name, very confusing one because it does
 ;; not checks if interaction has distination, it checks if it can have
 ;; one.
 
 (defn has-destination
   [interaction]
-  (#{:navigate :open-overlay :toggle-overlay :close-overlay}
+  (#{:navigate :open-overlay :toggle-overlay :close-overlay :swap-overlay :scroll-to}
    (:action-type interaction)))
 
 (defn destination?
@@ -417,7 +466,7 @@
 
 (defn has-overlay-opts
   [interaction]
-  (#{:open-overlay :toggle-overlay} (:action-type interaction)))
+  (#{:open-overlay :toggle-overlay :swap-overlay} (:action-type interaction)))
 
 (defn set-overlay-pos-type
   [interaction overlay-pos-type shape objects]
@@ -601,7 +650,7 @@
 
 (defn has-animation?
   [interaction]
-  (#{:navigate :open-overlay :close-overlay :toggle-overlay} (:action-type interaction)))
+  (#{:navigate :open-overlay :close-overlay :toggle-overlay :swap-overlay} (:action-type interaction)))
 
 (defn allow-push?
   [action-type]
@@ -826,13 +875,13 @@
 (defn flow-origin?
   "Check if there is any interaction that is the start or the continuation of a flow"
   [interactions]
-  (some #(and (#{:navigate :open-overlay :toggle-overlay :close-overlay} (:action-type %))
+  (some #(and (#{:navigate :open-overlay :toggle-overlay :close-overlay :swap-overlay} (:action-type %))
               (some? (:destination %)))
         interactions))
 
 (defn flow-to?
   "Check if there is any interaction that flows into the given frame"
   [interactions frame-id]
-  (some #(and (#{:navigate :open-overlay :toggle-overlay :close-overlay} (:action-type %))
+  (some #(and (#{:navigate :open-overlay :toggle-overlay :close-overlay :swap-overlay} (:action-type %))
               (= (:destination %) frame-id))
         interactions))

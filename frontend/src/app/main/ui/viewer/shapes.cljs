@@ -8,6 +8,7 @@
   "The main container for a frame in viewer mode"
   (:require
    [app.common.data :as d]
+   [app.common.data.macros :as dm]
    [app.common.files.helpers :as cfh]
    [app.common.geom.shapes :as gsh]
    [app.common.types.shape.interactions :as ctsi]
@@ -28,6 +29,7 @@
    [app.util.dom :as dom]
    [app.util.object :as obj]
    [app.util.timers :as tm]
+   [cuerdas.core :as str]
    [okulary.core :as l]
    [rumext.v2 :as mf]))
 
@@ -144,7 +146,68 @@
     :open-url
     (st/emit! (dom/open-new-window (:url interaction)))
 
+    ;; Closes the overlay the shape is in and opens the destination in
+    ;; its place, as Figma's "swap overlay".
+    :swap-overlay
+    (let [parent-ids (set (cfh/get-parent-ids objects (:id shape)))
+          current    (or (some #(when (or (contains? parent-ids (:id %))
+                                          (= (:id %) (:id shape)))
+                                  (:id %))
+                               overlays)
+                         (:frame-id shape))
+          overlays   (remove #(= (:id %) current) overlays)]
+      (when (some? (:destination interaction))
+        (st/emit! (dv/close-overlay current nil))
+        (activate-interaction (assoc interaction :action-type :open-overlay)
+                              shape base-frame frame-offset objects overlays)))
+
+    ;; Scrolls the screen so the destination layer is at its top-left.
+    :scroll-to
+    (when-let [target (get objects (:destination interaction))]
+      (let [section (dom/get-element "viewer-section")
+            zoom    (dm/get-in @st/state [:viewer-local :zoom] 1)
+            frame   (:selrect base-frame)
+            target  (:selrect target)]
+        (when (and section frame target)
+          (.scrollTo ^js section
+                     #js {:left (* zoom (- (:x target) (:x frame)))
+                          :top (* zoom (- (:y target) (:y frame)))
+                          :behavior "smooth"}))))
+
     nil))
+
+(defn- key-matches?
+  [interaction event]
+  (let [expected (:key interaction)
+        pressed  (.-key ^js event)]
+    (or (= expected pressed)
+        (and (= 1 (count expected))
+             (= (str/lower expected) (str/lower pressed))))))
+
+(defn- listen-keys
+  "Runs the :key-press interactions of the shape while it is mounted (its
+  board or overlay is shown). Returns the function that stops it."
+  [shape base-frame frame-offset objects]
+  (let [interactions (filterv #(= (:event-type %) :key-press) (:interactions shape))]
+    (if (empty? interactions)
+      (constantly nil)
+      (let [handler
+            (fn [^js event]
+              (let [target (.-target event)]
+                (when-not (or (.-repeat event)
+                              (some-> target .-tagName #{"INPUT" "TEXTAREA"})
+                              (some-> target .-isContentEditable))
+                  (let [matching (filterv #(key-matches? % event) interactions)]
+                    (when (seq matching)
+                      ;; Keep the viewer's own arrow/space shortcuts from
+                      ;; also running.
+                      (dom/prevent-default event)
+                      (.stopImmediatePropagation event)
+                      (doseq [interaction matching]
+                        (activate-interaction interaction shape base-frame frame-offset objects
+                                              @refs/viewer-overlays)))))))]
+        (.addEventListener js/window "keydown" handler true)
+        #(.removeEventListener js/window "keydown" handler true)))))
 
 ;; Perform the opposite action of an interaction, if possible
 (defn- deactivate-interaction
@@ -322,6 +385,9 @@
       (let [sems (on-load shape base-frame frame-offset all-objects overlays)]
         (partial run! tm/dispose! sems)))
 
+    (mf/with-effect [shape base-frame frame-offset all-objects]
+      (listen-keys shape base-frame frame-offset all-objects))
+
     [:g {:style {:cursor (when (ctsi/actionable? interactions) "pointer")}
          :on-pointer-down on-pd
          :on-pointer-up on-pu
@@ -407,6 +473,9 @@
       (mf/with-effect []
         (let [sems (on-load shape base-frame frame-offset objects overlays)]
           (partial run! tm/dispose! sems)))
+
+      (mf/with-effect [shape base-frame frame-offset all-objects]
+        (listen-keys shape base-frame frame-offset all-objects))
 
       (if-not svg-element?
         [:> shape-container {:shape shape
