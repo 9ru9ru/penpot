@@ -419,9 +419,11 @@
     (watch [_ state _]
       (let [share-id (-> state :viewer-local :share-id)]
         (->> (rp/cmd! :get-comment-threads {:file-id file-id :share-id share-id})
-             (rx/mapcat (fn [threads]
-                          (rx/of #(assoc % :comment-threads {})
-                                 (comment-threads-fetched threads))))
+             ;; One state change, so an open thread never disappears
+             ;; for a render in between.
+             (rx/map (fn [threads]
+                       (let [fetched (comment-threads-fetched threads)]
+                         #(ptk/update fetched (assoc % :comment-threads {})))))
              (rx/catch (fn [_] (rx/empty))))))))
 
 (defn retrieve-comment-threads
