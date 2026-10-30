@@ -32,6 +32,7 @@
    [app.main.ui.ds.buttons.icon-button :refer [icon-button*]]
    [app.main.ui.ds.foundations.assets.icon :refer [icon*] :as i]
    [app.main.ui.icons :as deprecated-icon]
+   [app.main.ui.workspace.local-fonts :as lfonts]
    [app.util.dom :as dom]
    [app.util.i18n :as i18n :refer [tr]]
    [app.util.keyboard :as kbd]
@@ -459,6 +460,11 @@
                         :value (:term state)
                         :auto-focus true
                         :placeholder (tr "workspace.options.search-font")}]
+       (when (lfonts/available?)
+         [:button {:class (stl/css :local-fonts-button)
+                   :data-testid "add-local-fonts"
+                   :on-click #(lfonts/open! (:current-team-id @st/state))}
+          (tr "workspace.local-fonts.open")])
        (when (and recent-fonts show-recent)
          [:section {:class (stl/css :show-recent)}
           [:p {:class (stl/css :header-title)} (tr "workspace.options.recent-fonts")]

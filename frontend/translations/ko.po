@@ -10474,3 +10474,55 @@ msgstr "스크롤 이동"
 #: src/app/main/ui/workspace/sidebar/options/menus/interactions.cljs
 msgid "workspace.options.interaction-scroll-to-dest"
 msgstr "스크롤 이동: %s"
+
+#: src/app/main/ui/workspace/local_fonts.cljs
+msgid "workspace.local-fonts.open"
+msgstr "내 컴퓨터 폰트 추가…"
+
+#: src/app/main/ui/workspace/local_fonts.cljs
+msgid "workspace.local-fonts.title"
+msgstr "내 컴퓨터의 폰트"
+
+#: src/app/main/ui/workspace/local_fonts.cljs
+msgid "workspace.local-fonts.hint"
+msgstr "고른 폰트는 팀 폰트로 올라가서 팀의 모든 사람이 쓸 수 있습니다."
+
+#: src/app/main/ui/workspace/local_fonts.cljs
+msgid "workspace.local-fonts.loading"
+msgstr "설치된 폰트를 읽는 중…"
+
+#: src/app/main/ui/workspace/local_fonts.cljs
+msgid "workspace.local-fonts.denied"
+msgstr "브라우저가 설치된 폰트에 접근하지 못하게 했습니다. 브라우저의 사이트 설정에서 이 사이트의 \"글꼴\" 권한을 허용한 뒤 다시 시도하세요."
+
+#: src/app/main/ui/workspace/local_fonts.cljs
+msgid "workspace.local-fonts.search"
+msgstr "폰트 검색"
+
+#: src/app/main/ui/workspace/local_fonts.cljs
+msgid "workspace.local-fonts.styles"
+msgstr "스타일 %s개"
+
+#: src/app/main/ui/workspace/local_fonts.cljs
+msgid "workspace.local-fonts.already-added"
+msgstr "이미 팀에 있음"
+
+#: src/app/main/ui/workspace/local_fonts.cljs
+msgid "workspace.local-fonts.more"
+msgstr "%s개 더 있음 — 검색해서 찾으세요"
+
+#: src/app/main/ui/workspace/local_fonts.cljs
+msgid "workspace.local-fonts.add"
+msgstr "%s개 추가"
+
+#: src/app/main/ui/workspace/local_fonts.cljs
+msgid "workspace.local-fonts.uploading"
+msgstr "올리는 중…"
+
+#: src/app/main/ui/workspace/local_fonts.cljs
+msgid "workspace.local-fonts.added"
+msgstr "폰트 %s종을 팀에 추가했습니다"
+
+#: src/app/main/ui/workspace/local_fonts.cljs
+msgid "workspace.local-fonts.upload-error"
+msgstr "폰트를 올리지 못했습니다"

@@ -10777,3 +10777,55 @@ msgstr "Scroll to"
 #: src/app/main/ui/workspace/sidebar/options/menus/interactions.cljs
 msgid "workspace.options.interaction-scroll-to-dest"
 msgstr "Scroll to: %s"
+
+#: src/app/main/ui/workspace/local_fonts.cljs
+msgid "workspace.local-fonts.open"
+msgstr "Add fonts from this computer…"
+
+#: src/app/main/ui/workspace/local_fonts.cljs
+msgid "workspace.local-fonts.title"
+msgstr "Fonts on this computer"
+
+#: src/app/main/ui/workspace/local_fonts.cljs
+msgid "workspace.local-fonts.hint"
+msgstr "The fonts you pick are uploaded to the team fonts, so everyone in the team can use them."
+
+#: src/app/main/ui/workspace/local_fonts.cljs
+msgid "workspace.local-fonts.loading"
+msgstr "Reading the installed fonts…"
+
+#: src/app/main/ui/workspace/local_fonts.cljs
+msgid "workspace.local-fonts.denied"
+msgstr "The browser did not give access to the installed fonts. Allow \"Fonts\" for this site in the browser's site settings and try again."
+
+#: src/app/main/ui/workspace/local_fonts.cljs
+msgid "workspace.local-fonts.search"
+msgstr "Search fonts"
+
+#: src/app/main/ui/workspace/local_fonts.cljs
+msgid "workspace.local-fonts.styles"
+msgstr "%s styles"
+
+#: src/app/main/ui/workspace/local_fonts.cljs
+msgid "workspace.local-fonts.already-added"
+msgstr "Already in the team"
+
+#: src/app/main/ui/workspace/local_fonts.cljs
+msgid "workspace.local-fonts.more"
+msgstr "%s more — search to find them"
+
+#: src/app/main/ui/workspace/local_fonts.cljs
+msgid "workspace.local-fonts.add"
+msgstr "Add %s"
+
+#: src/app/main/ui/workspace/local_fonts.cljs
+msgid "workspace.local-fonts.uploading"
+msgstr "Uploading…"
+
+#: src/app/main/ui/workspace/local_fonts.cljs
+msgid "workspace.local-fonts.added"
+msgstr "%s font families added to the team"
+
+#: src/app/main/ui/workspace/local_fonts.cljs
+msgid "workspace.local-fonts.upload-error"
+msgstr "Could not upload the fonts"

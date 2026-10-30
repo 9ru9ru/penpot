@@ -1,0 +1,98 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+//
+// Copyright (c) KALEIDOS INC Sucursal en España SL
+
+@use "refactor/common-refactor.scss" as deprecated;
+
+.modal-overlay {
+  @extend %modal-overlay-base;
+}
+
+.modal-container {
+  @extend %modal-container-base;
+
+  min-width: deprecated.$s-480;
+}
+
+.modal-header {
+  margin-bottom: deprecated.$s-16;
+}
+
+.modal-title {
+  @include deprecated.headline-medium-typography;
+
+  color: var(--modal-title-foreground-color);
+}
+
+.modal-close-btn {
+  @extend %modal-close-btn-base;
+}
+
+.modal-content {
+  @include deprecated.flex-column;
+  @include deprecated.body-small-typography;
+
+  gap: deprecated.$s-12;
+  margin-bottom: deprecated.$s-24;
+  color: var(--modal-text-foreground-color);
+}
+
+.hint {
+  color: var(--color-foreground-secondary);
+}
+
+.error {
+  color: var(--color-foreground-error);
+}
+
+.search-input {
+  @extend %input-element;
+  @include deprecated.body-small-typography;
+
+  inline-size: 100%;
+  padding: 0 deprecated.$s-8;
+  color: var(--input-foreground-color-active);
+}
+
+.family-list {
+  @include deprecated.flex-column;
+
+  max-block-size: deprecated.$s-400;
+  overflow-y: auto;
+  gap: deprecated.$s-2;
+}
+
+.family-row {
+  display: flex;
+  align-items: center;
+  gap: deprecated.$s-8;
+  min-block-size: deprecated.$s-32;
+}
+
+.family-name {
+  flex: 1;
+  overflow: hidden;
+  color: var(--color-foreground-primary);
+  font-size: deprecated.$fs-16;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.family-meta {
+  color: var(--color-foreground-secondary);
+}
+
+.modal-footer {
+  @extend %modal-action-btns;
+}
+
+.cancel-button {
+  @extend %modal-cancel-btn;
+}
+
+.accept-button {
+  @extend %modal-accept-btn;
+}

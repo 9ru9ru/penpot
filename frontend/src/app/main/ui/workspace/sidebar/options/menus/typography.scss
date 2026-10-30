@@ -456,3 +456,21 @@ $font-preview-box-height: 28px;
 .dropdown-icon {
   color: var(--color-foreground-secondary);
 }
+
+.local-fonts-button {
+  @include t.use-typography("body-small");
+
+  width: 100%;
+  margin-block-start: var(--sp-xs);
+  padding: var(--sp-xs) var(--sp-s);
+  border: none;
+  border-radius: $br-8;
+  background: none;
+  color: var(--color-accent-primary);
+  text-align: start;
+  cursor: pointer;
+
+  &:hover {
+    background-color: var(--color-background-quaternary);
+  }
+}
